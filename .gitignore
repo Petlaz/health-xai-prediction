@@ -1,0 +1,63 @@
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+env/
+venv/
+.venv/
+ENV/
+.ipynb_checkpoints/
+*.egg
+*.egg-info/
+pip-wheel-metadata/
+build/
+dist/
+*.whl
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+
+# IDE
+.idea/
+
+# Data
+data/raw/*
+!data/raw/.keep
+data/processed/*
+!data/processed/.keep
+
+# Model and Results
+results/
+!results/**/
+!results/**/README.md
+models/
+*.h5
+*.pt
+*.pkl
+*.joblib
+*.npy
+*.npz
+
+# Logs and temporary files
+logs/
+*.log
+tmp/
+temp/
+*.bak
+
+# Docker
+docker/*.log
+docker/tmp/
+
+# Gradio cache
+gradio_cached_examples/
