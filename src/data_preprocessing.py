@@ -423,3 +423,5 @@ def run_preprocessing_pipeline() -> None:
 
 if __name__ == "__main__":
     run_preprocessing_pipeline()
+
+# Run the preprocessing pipeline : python src/data_preprocessing.py
