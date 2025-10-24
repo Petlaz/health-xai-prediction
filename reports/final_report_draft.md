@@ -1,8 +1,44 @@
 # Final Report Draft
 
-## 🧠 2. State of the Art
+## 1. Introduction
+Cardiovascular disease remains a leading cause of mortality across Europe, yet the wealth of survey-based health and lifestyle information collected annually is rarely transformed into actionable, personalised risk insights. This project investigates how classical machine learning models and lightweight neural networks can be paired with Local Explainable AI (XAI) methods to deliver transparent risk assessments for individuals participating in a European health survey (~40,000 records). By coupling predictive performance with local explanations, the work aims to support clinicians and public-health analysts who need to understand why a model flags a respondent as high risk and what behaviour changes could alter that prediction.
 
-### 2.1 Introduction
+Week 1–2 focused on establishing the technical foundations for the study: curating the dataset, building reproducible preprocessing routines, exploring data quality issues, and training baseline models. The remainder of the project will iterate on these artefacts through model optimisation, explainability integration, and user-facing deployment via Gradio and Docker.
+
+---
+
+## 2. Methods
+
+### 2.1 Dataset Preparation
+- **Source:** European Health Survey CSV supplied by Nightingale Heart (≈42k rows, 52 engineered features after preprocessing).
+- **Targets:** Primary – `hltprhc` (heart condition, binary); secondary – `hltprhb` (high blood pressure) and `hltprdi` (diabetes) for future experiments.
+- **Cleaning steps:** Removed unnamed index column, standardised headers, and generated a feature mapping (`data/processed/feature_names.csv`) alongside an auto-built data dictionary (`data/data_dictionary.md`).
+- **Missingness:** Overall rate 0.25% (raw). Numeric attributes imputed with the median; categorical attributes imputed with the most frequent value to retain valid categories.
+- **Feature scaling/encoding:** Numeric features scaled via `StandardScaler`; categorical features one-hot encoded using `OneHotEncoder(handle_unknown="ignore")`. Processed splits (train/validation/test = 70/15/15, stratified) and the combined dataset (`health_clean.csv`) are saved to `data/processed/`.
+
+### 2.2 Exploratory Data Analysis
+- `notebooks/01_exploratory_analysis.ipynb` documents summary statistics, class balance (positive class ≈11.32%), correlation heatmaps, VIF, and IQR-based outlier detection.
+- Outputs (CSV summaries, plots) are stored under `results/metrics/` and `results/plots/` for reproducibility and to track data quality changes as features evolve.
+
+### 2.3 Baseline Modelling Pipeline
+- Implemented in `src/train_models.py` with shared utilities (`src/utils.py`).
+- Models: Logistic Regression (class-balanced), Random Forest, XGBoost, and a two-hidden-layer PyTorch feed-forward network.
+- Training artefacts (joblib models, scaler, neural network weights, cached splits) persist to `results/models/` for downstream evaluation and tuning.
+
+### 2.4 Evaluation & Error Analysis
+- `src/evaluate_models.py` generates accuracy, precision, recall, F1, ROC-AUC; confusion matrices; ROC and precision–recall curves; and scikit-learn classification reports saved to `results/metrics/`.
+- Misclassified samples with model predictions and error tags are exported as `results/metrics/misclassified_samples.csv` to seed deeper Week 3–4 analysis.
+
+### 2.5 Reproducibility & Tooling
+- Environment dependencies tracked in `requirements.txt`.
+- Docker image (`docker/Dockerfile`) provisions Python 3.11, system build tools, and installs project requirements for consistent execution across machines.
+- Experiment notebooks (`notebooks/02_data_processing_experiments.ipynb`, `notebooks/03_modeling_experiments.ipynb`) serve as scratchpads before formalising changes in the `src/` modules.
+
+---
+
+## 🧠 3. State of the Art
+
+### 3.1 Introduction
 
 Artificial Intelligence (AI) and Machine Learning (ML) have become essential in healthcare for predicting diseases and supporting clinical decisions.  
 Heart disease remains one of the world’s leading causes of mortality, and early detection through predictive analytics can significantly improve patient outcomes.  
@@ -12,7 +48,7 @@ This section reviews prior research on heart disease prediction using ML techniq
 
 ---
 
-### 2.2 Predictive Machine Learning in Heart Disease Detection
+### 3.2 Predictive Machine Learning in Heart Disease Detection
 
 Early studies on cardiovascular risk prediction primarily used classical ML algorithms such as **Logistic Regression**, **Support Vector Machines (SVM)**, and **Random Forests**, which provided reliable but limited interpretability.  
 
@@ -26,7 +62,7 @@ Recent work integrates ensemble methods (Random Forest, XGBoost) and deep neural
 
 ---
 
-### 2.3 Explainable AI (XAI) in Healthcare
+### 3.3 Explainable AI (XAI) in Healthcare
 
 With increasing emphasis on trustworthy AI, explainability has become central to healthcare ML systems.  
 **Model-agnostic** methods such as **LIME** (Ribeiro et al., 2016) and **SHAP** (Lundberg & Lee, 2017) are widely used to generate local and global feature explanations.
