@@ -308,11 +308,15 @@ def plot_confusion_matrix(
     save_dir = ensure_directory(save_dir)
     path = save_dir / f"{model_name}_{dataset_name}_confusion_matrix.png"
 
+    annot = [[f"TN (0→0)\n{cm[0, 0]}", f"FP (0→1)\n{cm[0, 1]}"], [f"FN (1→0)\n{cm[1, 0]}", f"TP (1→1)\n{cm[1, 1]}"]]
+
     plt.figure(figsize=(6, 5))
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False)
+    sns.heatmap(cm, annot=annot, fmt="", cmap="Blues", cbar=False)
     plt.title(f"{model_name} — {dataset_name.title()} Confusion Matrix")
     plt.ylabel("Actual")
     plt.xlabel("Predicted")
+    plt.xticks([0.5, 1.5], ["Predicted 0 (Negative)", "Predicted 1 (Positive)"])
+    plt.yticks([0.5, 1.5], ["Actual 0 (Negative)", "Actual 1 (Positive)"], rotation=0)
     plt.tight_layout()
     plt.savefig(path)
     plt.close()

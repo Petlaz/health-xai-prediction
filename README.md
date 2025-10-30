@@ -12,7 +12,7 @@ This repository hosts a three-month MSc research project focused on predicting h
 
 - Established an exploratory analysis workflow (`notebooks/01_exploratory_analysis.ipynb`) covering missingness, distributions, correlation heatmaps, VIF, and outlier diagnostics with outputs saved under `results/metrics/` and `results/plots/`.
 
-- Implemented a reproducible preprocessing pipeline (`src/data_preprocessing.py`) that standardises numeric features, one-hot encodes categoricals (with `handle_unknown="ignore"`), and exports stratified train/validation/test splits alongside EDA artefacts.
+- Implemented a reproducible preprocessing pipeline (`src/data_preprocessing.py`) that cleans the raw CSV, imputes missing values (median for numeric, mode for categorical), caps extreme outliers via IQR, standardises numeric features, one-hot encodes categoricals, and exports stratified train/validation/test splits.
 
 - Trained baseline classifiers — Logistic Regression, Random Forest, XGBoost, and a PyTorch feed-forward neural network — via `src/train_models.py`, persisting artefacts within `results/models/`.
 
@@ -53,6 +53,12 @@ health_xai_project/
 ---
 
 ## Getting Started
+
+```bash
+# Clone the repository (GitHub username: Petlaz)
+git clone https://github.com/Petlaz/health_xai_project.git
+cd health_xai_project
+```
 
 ### 1. Create the Environment
 

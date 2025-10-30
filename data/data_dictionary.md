@@ -12,34 +12,34 @@ This document describes the variables available in `data/raw/heart_data.csv` aft
 
 | Feature | Description | Type | Example |
 |---------|-------------|------|---------|
-| categorical__cntry_AT | Country code of respondent (ISO-2) (one-hot encoded: AT). | Binary | 1 |
-| categorical__cntry_BE | Country code of respondent (ISO-2) (one-hot encoded: BE). | Binary | 0 |
-| categorical__cntry_BG | Country code of respondent (ISO-2) (one-hot encoded: BG). | Binary | 0 |
-| categorical__cntry_CH | Country code of respondent (ISO-2) (one-hot encoded: CH). | Binary | 0 |
-| categorical__cntry_CY | Country code of respondent (ISO-2) (one-hot encoded: CY). | Binary | 0 |
-| categorical__cntry_DE | Country code of respondent (ISO-2) (one-hot encoded: DE). | Binary | 0 |
-| categorical__cntry_ES | Country code of respondent (ISO-2) (one-hot encoded: ES). | Binary | 0 |
-| categorical__cntry_FI | Country code of respondent (ISO-2) (one-hot encoded: FI). | Binary | 0 |
-| categorical__cntry_FR | Country code of respondent (ISO-2) (one-hot encoded: FR). | Binary | 0 |
-| categorical__cntry_GB | Country code of respondent (ISO-2) (one-hot encoded: GB). | Binary | 0 |
-| categorical__cntry_GR | Country code of respondent (ISO-2) (one-hot encoded: GR). | Binary | 0 |
-| categorical__cntry_HR | Country code of respondent (ISO-2) (one-hot encoded: HR). | Binary | 0 |
-| categorical__cntry_HU | Country code of respondent (ISO-2) (one-hot encoded: HU). | Binary | 0 |
-| categorical__cntry_IE | Country code of respondent (ISO-2) (one-hot encoded: IE). | Binary | 0 |
-| categorical__cntry_IL | Country code of respondent (ISO-2) (one-hot encoded: IL). | Binary | 0 |
-| categorical__cntry_IS | Country code of respondent (ISO-2) (one-hot encoded: IS). | Binary | 0 |
-| categorical__cntry_IT | Country code of respondent (ISO-2) (one-hot encoded: IT). | Binary | 0 |
-| categorical__cntry_LT | Country code of respondent (ISO-2) (one-hot encoded: LT). | Binary | 0 |
-| categorical__cntry_LV | Country code of respondent (ISO-2) (one-hot encoded: LV). | Binary | 0 |
-| categorical__cntry_ME | Country code of respondent (ISO-2) (one-hot encoded: ME). | Binary | 0 |
-| categorical__cntry_NL | Country code of respondent (ISO-2) (one-hot encoded: NL). | Binary | 0 |
-| categorical__cntry_NO | Country code of respondent (ISO-2) (one-hot encoded: NO). | Binary | 0 |
-| categorical__cntry_PL | Country code of respondent (ISO-2) (one-hot encoded: PL). | Binary | 0 |
-| categorical__cntry_PT | Country code of respondent (ISO-2) (one-hot encoded: PT). | Binary | 0 |
-| categorical__cntry_RS | Country code of respondent (ISO-2) (one-hot encoded: RS). | Binary | 0 |
-| categorical__cntry_SE | Country code of respondent (ISO-2) (one-hot encoded: SE). | Binary | 0 |
-| categorical__cntry_SI | Country code of respondent (ISO-2) (one-hot encoded: SI). | Binary | 0 |
-| categorical__cntry_SK | Country code of respondent (ISO-2) (one-hot encoded: SK). | Binary | 0 |
+| categorical__cntry_AT | Country of respondent is Austria (one-hot encoded: AT). | Binary | 1 |
+| categorical__cntry_BE | Country of respondent is Belgium (one-hot encoded: BE). | Binary | 0 |
+| categorical__cntry_BG | Country of respondent is Bulgaria (one-hot encoded: BG). | Binary | 0 |
+| categorical__cntry_CH | Country of respondent is Switzerland (one-hot encoded: CH). | Binary | 0 |
+| categorical__cntry_CY | Country of respondent is Cyprus (one-hot encoded: CY). | Binary | 0 |
+| categorical__cntry_DE | Country of respondent is Germany (one-hot encoded: DE). | Binary | 0 |
+| categorical__cntry_ES | Country of respondent is Spain (one-hot encoded: ES). | Binary | 0 |
+| categorical__cntry_FI | Country of respondent is Finland (one-hot encoded: FI). | Binary | 0 |
+| categorical__cntry_FR | Country of respondent is France (one-hot encoded: FR). | Binary | 0 |
+| categorical__cntry_GB | Country of respondent is United Kingdom (one-hot encoded: GB). | Binary | 0 |
+| categorical__cntry_GR | Country of respondent is Greece (one-hot encoded: GR). | Binary | 0 |
+| categorical__cntry_HR | Country of respondent is Croatia (one-hot encoded: HR). | Binary | 0 |
+| categorical__cntry_HU | Country of respondent is Hungary (one-hot encoded: HU). | Binary | 0 |
+| categorical__cntry_IE | Country of respondent is Ireland (one-hot encoded: IE). | Binary | 0 |
+| categorical__cntry_IL | Country of respondent is Israel (one-hot encoded: IL). | Binary | 0 |
+| categorical__cntry_IS | Country of respondent is Iceland (one-hot encoded: IS). | Binary | 0 |
+| categorical__cntry_IT | Country of respondent is Italy (one-hot encoded: IT). | Binary | 0 |
+| categorical__cntry_LT | Country of respondent is Lithuania (one-hot encoded: LT). | Binary | 0 |
+| categorical__cntry_LV | Country of respondent is Latvia (one-hot encoded: LV). | Binary | 0 |
+| categorical__cntry_ME | Country of respondent is Montenegro (one-hot encoded: ME). | Binary | 0 |
+| categorical__cntry_NL | Country of respondent is Netherlands (one-hot encoded: NL). | Binary | 0 |
+| categorical__cntry_NO | Country of respondent is Norway (one-hot encoded: NO). | Binary | 0 |
+| categorical__cntry_PL | Country of respondent is Poland (one-hot encoded: PL). | Binary | 0 |
+| categorical__cntry_PT | Country of respondent is Portugal (one-hot encoded: PT). | Binary | 0 |
+| categorical__cntry_RS | Country of respondent is Serbia (one-hot encoded: RS). | Binary | 0 |
+| categorical__cntry_SE | Country of respondent is Sweden (one-hot encoded: SE). | Binary | 0 |
+| categorical__cntry_SI | Country of respondent is Slovenia (one-hot encoded: SI). | Binary | 0 |
+| categorical__cntry_SK | Country of respondent is Slovakia (one-hot encoded: SK). | Binary | 0 |
 | hltprhc | Doctor diagnosed heart or circulation problems (1 yes, 0 no). | Binary | 0 |
 | numeric__alcfreq | Alcohol drinking frequency (scaled numeric feature). | Ordinal | -0.795 |
 | numeric__cgtsmok | Cigarette smoking status/frequency (daily, occasional, former, never) (scaled numeric feature). | Ordinal | -0.19 |
@@ -69,196 +69,196 @@ This document describes the variables available in `data/raw/heart_data.csv` aft
 
 ### categorical__cntry_AT
 
-- **categorical__cntry_AT** — Country code of respondent (ISO-2) (one-hot encoded: AT).
+- **categorical__cntry_AT** — Country of respondent is Austria (one-hot encoded).
 - **Type:** Binary
 - **Example:** 1
 - **Values:** {0: Not AT; 1: AT}
 
 ### categorical__cntry_BE
 
-- **categorical__cntry_BE** — Country code of respondent (ISO-2) (one-hot encoded: BE).
+- **categorical__cntry_BE** — Country of respondent is Belgium (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not BE; 1: BE}
 
 ### categorical__cntry_BG
 
-- **categorical__cntry_BG** — Country code of respondent (ISO-2) (one-hot encoded: BG).
+- **categorical__cntry_BG** — Country of respondent is Bulgaria (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not BG; 1: BG}
 
 ### categorical__cntry_CH
 
-- **categorical__cntry_CH** — Country code of respondent (ISO-2) (one-hot encoded: CH).
+- **categorical__cntry_CH** — Country of respondent is Switzerland (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not CH; 1: CH}
 
 ### categorical__cntry_CY
 
-- **categorical__cntry_CY** — Country code of respondent (ISO-2) (one-hot encoded: CY).
+- **categorical__cntry_CY** — Country of respondent is Cyprus (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not CY; 1: CY}
 
 ### categorical__cntry_DE
 
-- **categorical__cntry_DE** — Country code of respondent (ISO-2) (one-hot encoded: DE).
+- **categorical__cntry_DE** — Country of respondent is Germany (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not DE; 1: DE}
 
 ### categorical__cntry_ES
 
-- **categorical__cntry_ES** — Country code of respondent (ISO-2) (one-hot encoded: ES).
+- **categorical__cntry_ES** — Country of respondent is Spain (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not ES; 1: ES}
 
 ### categorical__cntry_FI
 
-- **categorical__cntry_FI** — Country code of respondent (ISO-2) (one-hot encoded: FI).
+- **categorical__cntry_FI** — Country of respondent is Finland (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not FI; 1: FI}
 
 ### categorical__cntry_FR
 
-- **categorical__cntry_FR** — Country code of respondent (ISO-2) (one-hot encoded: FR).
+- **categorical__cntry_FR** — Country of respondent is France (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not FR; 1: FR}
 
 ### categorical__cntry_GB
 
-- **categorical__cntry_GB** — Country code of respondent (ISO-2) (one-hot encoded: GB).
+- **categorical__cntry_GB** — Country of respondent is United Kingdom (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not GB; 1: GB}
 
 ### categorical__cntry_GR
 
-- **categorical__cntry_GR** — Country code of respondent (ISO-2) (one-hot encoded: GR).
+- **categorical__cntry_GR** — Country of respondent is Greece (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not GR; 1: GR}
 
 ### categorical__cntry_HR
 
-- **categorical__cntry_HR** — Country code of respondent (ISO-2) (one-hot encoded: HR).
+- **categorical__cntry_HR** — Country of respondent is Croatia (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not HR; 1: HR}
 
 ### categorical__cntry_HU
 
-- **categorical__cntry_HU** — Country code of respondent (ISO-2) (one-hot encoded: HU).
+- **categorical__cntry_HU** — Country of respondent is Hungary (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not HU; 1: HU}
 
 ### categorical__cntry_IE
 
-- **categorical__cntry_IE** — Country code of respondent (ISO-2) (one-hot encoded: IE).
+- **categorical__cntry_IE** — Country of respondent is Ireland (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not IE; 1: IE}
 
 ### categorical__cntry_IL
 
-- **categorical__cntry_IL** — Country code of respondent (ISO-2) (one-hot encoded: IL).
+- **categorical__cntry_IL** — Country of respondent is Israel (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not IL; 1: IL}
 
 ### categorical__cntry_IS
 
-- **categorical__cntry_IS** — Country code of respondent (ISO-2) (one-hot encoded: IS).
+- **categorical__cntry_IS** — Country of respondent is Iceland (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not IS; 1: IS}
 
 ### categorical__cntry_IT
 
-- **categorical__cntry_IT** — Country code of respondent (ISO-2) (one-hot encoded: IT).
+- **categorical__cntry_IT** — Country of respondent is Italy (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not IT; 1: IT}
 
 ### categorical__cntry_LT
 
-- **categorical__cntry_LT** — Country code of respondent (ISO-2) (one-hot encoded: LT).
+- **categorical__cntry_LT** — Country of respondent is Lithuania (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not LT; 1: LT}
 
 ### categorical__cntry_LV
 
-- **categorical__cntry_LV** — Country code of respondent (ISO-2) (one-hot encoded: LV).
+- **categorical__cntry_LV** — Country of respondent is Latvia (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not LV; 1: LV}
 
 ### categorical__cntry_ME
 
-- **categorical__cntry_ME** — Country code of respondent (ISO-2) (one-hot encoded: ME).
+- **categorical__cntry_ME** — Country of respondent is Montenegro (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not ME; 1: ME}
 
 ### categorical__cntry_NL
 
-- **categorical__cntry_NL** — Country code of respondent (ISO-2) (one-hot encoded: NL).
+- **categorical__cntry_NL** — Country of respondent is Netherlands (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not NL; 1: NL}
 
 ### categorical__cntry_NO
 
-- **categorical__cntry_NO** — Country code of respondent (ISO-2) (one-hot encoded: NO).
+- **categorical__cntry_NO** — Country of respondent is Norway (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not NO; 1: NO}
 
 ### categorical__cntry_PL
 
-- **categorical__cntry_PL** — Country code of respondent (ISO-2) (one-hot encoded: PL).
+- **categorical__cntry_PL** — Country of respondent is Poland (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not PL; 1: PL}
 
 ### categorical__cntry_PT
 
-- **categorical__cntry_PT** — Country code of respondent (ISO-2) (one-hot encoded: PT).
+- **categorical__cntry_PT** — Country of respondent is Portugal (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not PT; 1: PT}
 
 ### categorical__cntry_RS
 
-- **categorical__cntry_RS** — Country code of respondent (ISO-2) (one-hot encoded: RS).
+- **categorical__cntry_RS** — Country of respondent is Serbia (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not RS; 1: RS}
 
 ### categorical__cntry_SE
 
-- **categorical__cntry_SE** — Country code of respondent (ISO-2) (one-hot encoded: SE).
+- **categorical__cntry_SE** — Country of respondent is Sweden (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not SE; 1: SE}
 
 ### categorical__cntry_SI
 
-- **categorical__cntry_SI** — Country code of respondent (ISO-2) (one-hot encoded: SI).
+- **categorical__cntry_SI** — Country of respondent is Slovenia (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not SI; 1: SI}
 
 ### categorical__cntry_SK
 
-- **categorical__cntry_SK** — Country code of respondent (ISO-2) (one-hot encoded: SK).
+- **categorical__cntry_SK** — Country of respondent is Slovakia (one-hot encoded).
 - **Type:** Binary
 - **Example:** 0
 - **Values:** {0: Not SK; 1: SK}

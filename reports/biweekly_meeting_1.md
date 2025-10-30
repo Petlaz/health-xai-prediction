@@ -9,15 +9,16 @@
 ## 1. Data Preparation & EDA Highlights
 
 - Ingested ~42k records from the European Health Survey and cleaned feature names/documentation (`data/processed/feature_names.csv`, `data/data_dictionary.md`).
-- Delivered a reproducible EDA notebook (`notebooks/01_exploratory_analysis.ipynb`) covering missingness (overall **0.25%**), class balance (hltprhc = 1 → **11.32%**), correlation heatmaps, VIF, and outlier detection with exported artefacts in `results/metrics/` and `results/plots/`.
+- Delivered a reproducible EDA notebook (`notebooks/01_exploratory_analysis.ipynb`) covering missingness (overall **0.25%**), class balance (hltprhc = 1 → **11.32%**, flagged as a class imbalance risk), correlation heatmaps, VIF, and outlier detection with exported artefacts in `results/metrics/` and `results/plots/`.
 - Confirmed feature distribution split: **numeric = 23**, **categorical = 29**, guiding the choice of median imputation + one-hot encoding for the production pipeline.
 
 ## 2. Baseline Modeling Status
 
+- Finalised `src/data_preprocessing.py` to clean the raw survey (impute missing values, cap extreme outliers, encode features) and persist reusable train/validation/test splits.
 - Implemented `src/train_models.py` to train Logistic Regression, Random Forest, XGBoost, and a 2-layer PyTorch neural network on the processed dataset with stratified 70/15/15 splits.
 - Built `src/evaluate_models.py` to produce accuracy, precision, recall, F1, ROC-AUC, confusion matrices, ROC/PR curves, classification reports, and misclassification CSVs.
-- **Test-set snapshot (`results/metrics/metrics_summary.csv`):** Logistic Regression delivers Accuracy ≈0.755, Recall ≈0.72, F1 ≈0.40 (best at capturing positives), while Random Forest / XGBoost / NN reach Accuracy ≈0.89 but Recall falls to 0.15–0.22, indicating majority-class bias.
-- Misclassification analysis shows Logistic Regression produces the majority of false positives—even at high predicted probabilities—highlighting priority cases for Week 3–4 error analysis.
+- **Test-set snapshot (`results/metrics/metrics_summary.csv`):** Logistic Regression delivers Accuracy ≈0.755, Recall ≈0.72, F1 ≈0.40—highlighting its strength for the minority class—while Random Forest / XGBoost / NN reach Accuracy ≈0.89 but Recall falls to 0.15–0.22, underscoring majority-class bias on the imbalanced dataset.
+- Misclassification analysis shows Logistic Regression produces the majority of false positives—even at high predicted probabilities—highlighting priority cases for Week 3–4 error analysis and providing concrete samples for class-balancing experiments.
 
 ## 3. Artefact Inventory (Week 1–2)
 
@@ -29,7 +30,7 @@
 ## 4. Discussion Points & Decisions
 
 - Maintain median imputation + standard scaling for numeric features and most-frequent imputation for categoricals; revisit after tuning if recall remains depressed.
-- Prioritise recall improvements in Week 3–4 via class-weight tuning, threshold calibration, and potential resampling (SMOTE/undersampling) experiments.
+- Prioritise recall improvements in Week 3–4 via class-weight tuning, threshold calibration, and potential resampling (SMOTE/undersampling) experiments to counter the observed class imbalance.
 - Use newly generated classification reports (`results/metrics/classification_reports/`) to monitor macro F1 and per-class support when testing tuning hypotheses.
 - Document findings in `reports/biweekly_meeting_1.md` and align Week 3–4 objectives with the roadmap (tuning, literature review, Docker preparation).
 
