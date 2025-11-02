@@ -32,8 +32,8 @@ health_xai_project/
 │   └── data_dictionary.md       # Auto-generated feature documentation
 ├── notebooks/
 │   ├── 01_exploratory_analysis.ipynb
-│   ├── 02_data_processing_experiments.ipynb
-│   ├── 03_modeling_experiments.ipynb
+│   ├── 02_data_processing.ipynb
+│   ├── 03_modeling.ipynb
 │   ├── 04_error_analysis.ipynb
 │   └── 05_explainability_tests.ipynb
 ├── results/
@@ -88,9 +88,9 @@ python -m src.evaluate_models
 
 - `notebooks/01_exploratory_analysis.ipynb` — Re-run for exploratory visuals generated from the processed dataset.
 
-- `notebooks/02_data_processing_experiments.ipynb` — Sandbox for alternative imputation/encoding strategies prior to updating `src/data_preprocessing.py`.
+- `notebooks/02_data_processing.ipynb` — Sandbox for alternative imputation/encoding strategies prior to updating `src/data_preprocessing.py`.
 
-- `notebooks/03_modeling_experiments.ipynb` — End-to-end baseline experiments: training, evaluation, classification reports, misclassification review.
+- `notebooks/03_modeling.ipynb` — End-to-end baseline experiments: training, evaluation, classification reports, misclassification review.
 
 Each notebook prepends the project root to `sys.path` to enable `from src...` imports when run inside the `notebooks/` directory.
 
@@ -107,6 +107,7 @@ Each notebook prepends the project root to `sys.path` to enable `from src...` im
 - **Model Artefacts:** `results/models/` (scaler, trained models, neural network weights, cached splits)
 
 - **Evaluation Results:** `results/metrics/metrics_summary.csv`, `results/metrics/classification_reports/*.csv`, `results/metrics/misclassified_samples.csv`
+- **Baseline Insights:** Logistic Regression currently offers the strongest recall on the imbalanced target; tree/NN models show higher accuracy but will need tuning for better minority-class coverage.
 
 - **Diagnostics:** `results/confusion_matrices/*.png`, `results/plots/*_roc_curve.png`, `results/plots/*_precision_recall_curve.png`
 

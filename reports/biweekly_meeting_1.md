@@ -36,9 +36,18 @@
 
 ## 5. Action Items (Before Week 3–4)
 
-1. **Optimization Prep:** Define hyperparameter grids/random search ranges for LR, RF, XGB, and the NN; prepare experiment tracking templates.
-2. **Error Analysis Deep Dive:** Analyse `results/metrics/misclassified_samples.csv` to identify recurring feature patterns in false positives/negatives and propose feature engineering candidates.
-3. **Literature Review:** Summarise key papers on heart-risk explainability to feed into Week 3–4 tuning choices and the Methods section draft.
-4. **Reproducibility:** Draft Docker dependency requirements to ensure upcoming experiments remain portable.
+1. **Model Tuning:** Prioritise recall improvements via class weights, threshold calibration, or resampling; benchmark tuned models against the current Logistic Regression baseline.
+2. **Error Analysis:** Continue analysing `results/metrics/misclassified_samples.csv` to understand recurring false positives/negatives and identify feature engineering opportunities.
+3. **Explainability Prep:** Plan LIME/SHAP integration for the best-performing model and capture example explanations for the upcoming Gradio demo.
+4. **Literature Review:** Summarise key papers on heart-risk explainability to inform tuning decisions and Methods section updates.
+5. **Reproducibility:** Draft Docker dependency requirements so new experiments remain portable across environments.
 
 Next meeting (Week 3-4) will focus on tuned model improvements, validation strategy, and early literature review insights.
+
+---
+
+## Suggested Visuals for Presentation
+
+- `results/plots/class_balance.png` — highlights the 11.32% positive class and frames the recall discussion.
+- `results/confusion_matrices/logistic_regression_test_confusion_matrix.png` — shows the labelled TN/FP/FN/TP layout with high-confidence false positives.
+- Export the F1 / Precision / Recall bar charts from `notebooks/03_modeling.ipynb` to illustrate model trade-offs after evaluation.

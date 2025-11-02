@@ -9,7 +9,7 @@
 
 ## Project Overview
 
-The project targets predictive modeling of heart-related risks using ~40,000 survey responses from a European health and lifestyle study. Logistic Regression, Random Forest, XGBoost, and a PyTorch-based neural network will form the modeling backbone. Local explainability will be delivered through LIME and SHAP, with results surfaced via a Gradio web interface. Docker will containerize the full workflow for reproducibility and deployment.
+The project targets predictive modeling of heart-related risks using ~40,000 survey responses from a European health and lifestyle study. Logistic Regression, Random Forest, XGBoost, and a PyTorch-based neural network establish the modelling baseline; the best-performing tuned model will ultimately power the user-facing experience. Local explainability will be delivered through LIME and SHAP, with results surfaced via a Gradio web interface. Docker will containerize the full workflow for reproducibility and deployment.
 
 ### Dataset Highlights
 
@@ -55,16 +55,16 @@ The project targets predictive modeling of heart-related risks using ~40,000 sur
 
 ### Weeks 5–6 (Nov 17 – Dec 1): Local Explainability Integration (XAI)
 
-- Implement LIME and SHAP; generate SHAP summary/force plots and LIME explanations.
-- Compare local explanations across models; interpret healthcare implications.
+- Implement LIME and SHAP; generate SHAP summary/force plots and LIME explanations for the leading models from tuning.
+- Compare local explanations across candidates, interpret healthcare implications, and shortlist the model that balances recall and usability for the demo.
 - Ensure XAI workflows run inside Docker; advance State of the Art & Results sections.
 - **Deliverables:** XAI visualisations, interpretability report, Dockerised XAI pipeline.
 - **Reading:** *Interpretable ML* Ch. 4–6 · *Hands-On ML* Ch. 11 · *Designing ML Systems* Ch. 8
 
 ### Weeks 7–8 (Dec 2 – Dec 15): Gradio Demo Development & Report Progress
 
-- Build Gradio app for real-time predictions + explanations; integrate classical + NN models.
-- Test usability, latency, and explanation clarity; containerize demo (EXPOSE 7860).
+- Build Gradio app for real-time predictions + explanations; integrate the tuned, best-performing model selected in earlier sprints.
+- Test usability, latency, and explanation clarity, and include clinician-facing recommendations alongside LIME/SHAP outputs; containerize demo (EXPOSE 7860).
 - Continue Results & Discussion writing.
 - **Deliverables:** Functional Gradio demo (Dockerised) + Meeting 4 summary.
 - **Reading:** *Hands-On ML* Ch. 19 · *Designing ML Systems* Ch. 4
