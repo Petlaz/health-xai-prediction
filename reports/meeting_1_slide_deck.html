@@ -88,9 +88,9 @@
     <ul>
       <li><strong>Size:</strong> 42,377 records · 52 engineered features (23 numeric / 29 categorical).</li>
       <li><strong>Missingness:</strong> 0.25% overall (raw); <strong>Target balance:</strong> hltprhc = 1 → 11.32%.</li>
-      <li>Generated feature dictionary and mapping files for all encoded columns.</li>
-      <li>EDA outputs: missing-value summary, correlation heatmaps, VIF, IQR outliers (stored in <code>results/metrics</code> &amp; <code>results/plots</code>).</li>
+      <li>Feature dictionary and mapping files exported for all encoded columns.</li>
     </ul>
+    <img src="../results/plots/class_balance.png" alt="Class balance" style="max-width:70%; border:1px solid #1c2541; border-radius:8px; margin-top:1.5rem;">
     <footer>Slide 3</footer>
   </div>
 
@@ -100,8 +100,8 @@
       <li>Models: Logistic Regression, Random Forest, XGBoost, 2-layer PyTorch NN.</li>
       <li><strong>Best recall:</strong> Logistic Regression (Accuracy ≈0.755 · Recall ≈0.72 · F1 ≈0.40).</li>
       <li>Tree/NN models reach Accuracy ≈0.89 but Recall drops to 0.15–0.22 (majority-class bias).</li>
-      <li>Full metrics, confusion matrices, ROC &amp; PR curves saved in <code>results/metrics</code>, <code>results/confusion_matrices</code>, <code>results/plots</code>.</li>
     </ul>
+    <div style="font-size:1.2rem; margin-top:1rem; color:#9fd4d2;">⚙️ Export the F1 / Precision / Recall bar charts from <code>notebooks/03_modeling.ipynb</code> and paste them here.</div>
     <footer>Slide 4</footer>
   </div>
 
@@ -111,8 +111,8 @@
       <li>Logistic Regression produces most false positives, even with high predicted probabilities.</li>
       <li>Tree/NN models are conservative—few positives detected → target for recall improvements.</li>
       <li>Classification reports expose class imbalance (macro-F1 &lt; 0.45 across models).</li>
-      <li>Misclassified samples exported (<code>results/metrics/misclassified_samples.csv</code>) for deeper Week 3–4 analysis.</li>
     </ul>
+    <img src="../results/confusion_matrices/logistic_regression_test_confusion_matrix.png" alt="Confusion matrix" style="max-width:65%; border:1px solid #1c2541; border-radius:8px; margin-top:1.5rem;">
     <footer>Slide 5</footer>
   </div>
 
