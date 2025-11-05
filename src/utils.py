@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import re
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
@@ -256,6 +257,108 @@ def ensure_directory(path: Path | str) -> Path:
     directory = Path(path)
     directory.mkdir(parents=True, exist_ok=True)
     return directory
+
+
+def check_model_fit(train_score: float, val_score: float, tolerance: float = 0.03) -> str:
+    """Quick heuristic to flag over/under-fitting based on train vs validation metric."""
+
+    diff = train_score - val_score
+    if diff > tolerance:
+        status = f"⚠️ Overfitting detected (Δ={diff:.3f})"
+    elif diff < -tolerance:
+        status = f"⚠️ Underfitting detected (Δ={diff:.3f})"
+    else:
+        status = f"✅ Model is OK (Δ={diff:.3f})"
+
+    print(status)
+    return status
+
+
+def log_model_diagnostic(
+    model_name: str,
+    train_score: float,
+    val_score: float,
+    status: str,
+    output_path: Path | str = PROJECT_ROOT / "results" / "metrics" / "model_diagnostics.csv",
+) -> Path:
+    """Append model diagnostic information to a CSV log."""
+
+    path = Path(output_path)
+    ensure_directory(path.parent)
+
+    from pandas import DataFrame, read_csv
+
+    if path.exists() and path.stat().st_size > 0:
+        existing = read_csv(path)
+        if "diagnosis" not in existing.columns and "status" in existing.columns:
+            existing = existing.rename(columns={"status": "diagnosis"})
+            existing.to_csv(path, index=False)
+
+    record = DataFrame(
+        [
+            {
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "model": model_name,
+                "train_recall": round(train_score, 4),
+                "val_recall": round(val_score, 4),
+                "diagnosis": status,
+            }
+        ]
+    )
+    record.to_csv(path, mode="a", index=False, header=not path.exists())
+    print(f"[INFO] Logged diagnostics for {model_name} to {path}")
+    return path
+
+
+def get_top_model(diagnostics_path: Path | str = PROJECT_ROOT / "results" / "metrics" / "model_diagnostics.csv"):
+    """Return the top-performing model summary from the diagnostics log."""
+
+    from pandas import read_csv
+
+    path = Path(diagnostics_path)
+    if not path.exists():
+        print("⚠️ No diagnostics log found.")
+        return None
+
+    df = read_csv(path)
+    if df.empty:
+        print("⚠️ Diagnostics file empty.")
+        return None
+
+    top = df.sort_values(by="val_recall", ascending=False).iloc[0]
+    print("\n🏆 **Top Performing Model Summary** 🏆")
+    print(f"Model: {top['model']}")
+    print(f"Validation Recall: {top['val_recall']:.3f}")
+    print(f"Training Recall: {top['train_recall']:.3f}")
+    print(f"Fit Diagnosis: {top['diagnosis']}")
+    return top
+
+
+def save_top_model(
+    model_objects: Dict[str, object],
+    diagnostics_path: Path | str = PROJECT_ROOT / "results" / "metrics" / "model_diagnostics.csv",
+) -> Optional[Path]:
+    """Persist the best-performing model under results/models."""
+
+    top = get_top_model(diagnostics_path)
+    if top is None:
+        return None
+
+    model_name = top["model"]
+    model = model_objects.get(model_name)
+    if model is None:
+        print(f"⚠️ {model_name} not found among trained models.")
+        return None
+
+    ensure_directory(PROJECT_ROOT / "results" / "models")
+    if hasattr(model, "state_dict"):
+        save_path = PROJECT_ROOT / "results" / "models" / "best_model.pt"
+    else:
+        save_path = PROJECT_ROOT / "results" / "models" / "best_model.joblib"
+
+    save_model(model, save_path)
+    print(f"🏆 Saved top-performing model ({model_name}) to {save_path}")
+    return save_path
 
 
 def save_model(model, path: Path | str) -> Path:
@@ -538,6 +641,10 @@ def update_data_dictionary() -> None:
 
 __all__ = [
     "update_data_dictionary",
+    "check_model_fit",
+    "log_model_diagnostic",
+    "get_top_model",
+    "save_top_model",
     "ensure_directory",
     "save_model",
     "load_model",

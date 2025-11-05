@@ -20,6 +20,7 @@ from sklearn.metrics import (
 )
 
 from src.train_models import FeedForwardNN
+from src.models.neural_network import HealthNN
 from src.utils import (
     ensure_directory,
     load_model,
@@ -43,12 +44,26 @@ NN_MODEL_PATH = MODEL_DIR / "neural_network.pt"
 NN_CONFIG_PATH = MODEL_DIR / "neural_network_config.json"
 TARGET_COLUMN = "hltprhc"
 
-MODEL_PATHS = {
+BASELINE_MODEL_PATHS = {
     "logistic_regression": MODEL_DIR / "logistic_regression.joblib",
     "random_forest": MODEL_DIR / "random_forest.joblib",
     "xgboost": MODEL_DIR / "xgboost_classifier.joblib",
 }
+TUNED_MODEL_PATHS = {
+    "logistic_regression_tuned": MODEL_DIR / "logistic_regression_tuned.joblib",
+    "random_forest_tuned": MODEL_DIR / "random_forest_tuned.joblib",
+    "xgboost_tuned": MODEL_DIR / "xgboost_tuned.joblib",
+}
 NEURAL_MODEL_NAME = "neural_network"
+TUNED_NEURAL_MODEL_NAME = "neural_network_tuned"
+TUNED_NN_MODEL_PATH = MODEL_DIR / "neural_network_tuned.pt"
+TUNED_NN_CONFIG_PATH = MODEL_DIR / "neural_network_tuned_params.json"
+SCALED_FEATURE_MODELS = {
+    "logistic_regression",
+    "logistic_regression_tuned",
+    NEURAL_MODEL_NAME,
+    TUNED_NEURAL_MODEL_NAME,
+}
 
 
 def load_splits() -> Dict[str, pd.DataFrame]:
@@ -77,11 +92,11 @@ def load_splits() -> Dict[str, pd.DataFrame]:
     return splits
 
 
-def load_models() -> Tuple[Dict[str, object], object]:
+def load_models(input_dim: int, include_tuned: bool = True) -> Tuple[Dict[str, object], object]:
     """Load trained models, scaler, and neural network architecture."""
     from sklearn.preprocessing import StandardScaler
 
-    missing_models = [name for name, path in MODEL_PATHS.items() if not path.exists()]
+    missing_models = [name for name, path in BASELINE_MODEL_PATHS.items() if not path.exists()]
     if missing_models:
         raise FileNotFoundError(
             "Trained models are missing. "
@@ -90,10 +105,7 @@ def load_models() -> Tuple[Dict[str, object], object]:
 
     scaler: StandardScaler = load_model(SCALER_PATH)
 
-    models = {
-        name: joblib.load(path)
-        for name, path in MODEL_PATHS.items()
-    }
+    models = {name: joblib.load(path) for name, path in BASELINE_MODEL_PATHS.items()}
 
     if not NN_CONFIG_PATH.exists() or not NN_MODEL_PATH.exists():
         raise FileNotFoundError(
@@ -110,10 +122,24 @@ def load_models() -> Tuple[Dict[str, object], object]:
     load_model(NN_MODEL_PATH, nn_model)
     models[NEURAL_MODEL_NAME] = nn_model
 
+    if include_tuned:
+        for name, path in TUNED_MODEL_PATHS.items():
+            if path.exists():
+                models[name] = joblib.load(path)
+
+        if TUNED_NN_MODEL_PATH.exists() and TUNED_NN_CONFIG_PATH.exists():
+            with TUNED_NN_CONFIG_PATH.open(encoding="utf-8") as handle:
+                tuned_config = json.load(handle)
+            tuned_hidden = int(tuned_config.get("hidden_dim", 128))
+            tuned_dropout = float(tuned_config.get("dropout", 0.3))
+            tuned_model = HealthNN(input_dim, tuned_hidden, tuned_dropout)
+            load_model(TUNED_NN_MODEL_PATH, tuned_model)
+            models[TUNED_NEURAL_MODEL_NAME] = tuned_model
+
     return models, scaler
 
 
-def evaluate_models() -> pd.DataFrame:
+def evaluate_models(include_tuned: bool = True) -> pd.DataFrame:
     """Run evaluation across baseline models and persist results."""
     ensure_directory(METRICS_DIR)
     ensure_directory(CONFUSION_DIR)
@@ -121,7 +147,8 @@ def evaluate_models() -> pd.DataFrame:
     ensure_directory(REPORTS_DIR)
 
     splits = load_splits()
-    models, scaler = load_models()
+    input_dim = splits["X_train"].shape[1]
+    models, scaler = load_models(input_dim=input_dim, include_tuned=include_tuned)
 
     X_val = splits["X_val"]
     X_test = splits["X_test"]
@@ -141,12 +168,12 @@ def evaluate_models() -> pd.DataFrame:
 
     for model_name, model in models.items():
         for dataset_name, (X_df, X_scaled, y_true) in datasets.items():
-            if model_name in {"logistic_regression", NEURAL_MODEL_NAME}:
+            if model_name in SCALED_FEATURE_MODELS:
                 features = X_scaled
             else:
                 features = X_df.to_numpy()
 
-            if model_name == NEURAL_MODEL_NAME:
+            if model_name in {NEURAL_MODEL_NAME, TUNED_NEURAL_MODEL_NAME}:
                 with torch.no_grad():
                     tensor = torch.tensor(features, dtype=torch.float32)
                     logits = model(tensor)

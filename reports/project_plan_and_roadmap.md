@@ -48,6 +48,7 @@ The project targets predictive modeling of heart-related risks using ~40,000 sur
 
 - Tune hyperparameters (grid/random search); refine NN architecture (depth, learning rate).
 - Validate optimised models on unseen data; document misclassification patterns.
+- Capture recall-first diagnostics (RandomizedSearchCV with class weighting, recall scoring, early-stopping) and save out `model_diagnostics.csv` + `best_model.*` snapshots for reference.
 - Begin literature review (“State of the Art”) guided by error insights; update Docker environment.
 - Continue Methods section.
 - **Deliverables:** Tuned models, validation metrics, error summary, literature notes.
@@ -58,6 +59,7 @@ The project targets predictive modeling of heart-related risks using ~40,000 sur
 - Implement LIME and SHAP; generate SHAP summary/force plots and LIME explanations for the leading models from tuning.
 - Compare local explanations across candidates, interpret healthcare implications, and shortlist the model that balances recall and usability for the demo.
 - Ensure XAI workflows run inside Docker; advance State of the Art & Results sections.
+- Begin threshold calibration experiments for the recall-first neural network so its lower precision relative to tree/boosting models is addressed before demo deployment.
 - **Deliverables:** XAI visualisations, interpretability report, Dockerised XAI pipeline.
 - **Reading:** *Interpretable ML* Ch. 4–6 · *Hands-On ML* Ch. 11 · *Designing ML Systems* Ch. 8
 

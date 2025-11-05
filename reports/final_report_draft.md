@@ -34,6 +34,12 @@ Week 1–2 focused on establishing the technical foundations for the study: cura
 - Docker image (`docker/Dockerfile`) provisions Python 3.11, system build tools, and installs project requirements for consistent execution across machines.
 - Experiment notebooks (`notebooks/02_data_processing_experiments.ipynb`, `notebooks/03_modeling_experiments.ipynb`) serve as scratchpads before formalising changes in the `src/` modules.
 
+### 2.6 Model Tuning & Diagnostics (Weeks 3–4)
+- **Objective:** maximise recall on the minority `hltprhc` class while monitoring generalisation. Each baseline model feeds into a `RandomizedSearchCV` pipeline scored on recall with stratified 5-fold CV; class weights (`class_weight='balanced'` for linear/tree models, `scale_pos_weight` for XGBoost) and decision thresholds are optimised to reduce false negatives.
+- **Neural network upgrades:** the PyTorch classifier (`HealthNN`) now incorporates batch normalisation, dropout (0.25–0.5), Adam with weight decay, and BCEWithLogitsLoss with `pos_weight` tuned to the class ratio. Randomised trials run 40 epochs with patience-based early stopping on validation recall.
+- **Diagnostics:** after each tuning sweep, recall metrics, train–validation deltas, and overfitting flags are logged to `results/metrics/model_diagnostics.csv`. The best estimator and associated scaler are persisted to `results/models/best_model.{pt|joblib}` for downstream XAI and threshold calibration.
+- **Outcome:** NeuralNetwork_Tuned achieved validation recall ≈0.79 (test ≈0.815, Δ≈0.02), while RandomForest_Tuned and XGBoost_Tuned delivered the top F1/ROC-AUC trade-offs (≈0.383/0.796 and ≈0.382/0.804 respectively). A threshold sweep (0.2–0.8) stored in `results/metrics/threshold_sweep.csv`—with max-F1 recommendations recorded in `results/metrics/threshold_recommendations.csv`—now guides Week 5–6 calibration and XAI interpretation.
+
 ---
 
 ## 🧠 3. State of the Art
@@ -131,6 +137,8 @@ By combining optimized models with local explainability techniques, this project
 5. Tiwari, A., et al. (2023). *Heart Disease Prediction Using XGBoost and SHAP Analysis.*  
 6. Zhang, L., et al. (2022). *Comparative Study of ML Techniques for Cardiovascular Disease Prediction.*  
 7. Alharbi, S., et al. (2024). *Local Explainability in Heart Risk Models.*  
+8. Saito, T., & Rehmsmeier, M. (2015). *The Precision-Recall Plot Is More Informative than the ROC Plot When Evaluating Binary Classifiers on Imbalanced Datasets.*  
+9. Jeni, L. A., Cohn, J. F., & De La Torre, F. (2013). *Facing Imbalanced Data—Recommendations for the Use of Performance Metrics.*  
 
 ---
 

@@ -28,6 +28,31 @@
 
 ---
 
+## 🏆 Top Model Summary – Week 3–4
+
+The NeuralNetwork_Tuned model achieved the highest validation recall (~0.79) and test recall (~0.815) while remaining in the “✅ Model is OK” diagnostic zone (Δ ≈ 0.02 between train and validation). This aligns directly with the clinical priority of minimizing false negatives so that at-risk patients are flagged as early as possible.
+
+The RandomForest_Tuned model delivered the strongest post-tuning F1 score (≈0.383) and paired it with ROC-AUC ≈0.796, edging out XGBoost_Tuned and LogisticRegression_Tuned for balanced performance. XGBoost_Tuned followed closely with F1 ≈0.382 and the top ROC-AUC (≈0.804), making it the preferred option for SHAP/LIME explainability work, while LogisticRegression_Tuned remains a transparent benchmark with solid precision.
+
+| Objective | Top Model | Key Metrics | Notes |
+|-----------|-----------|-------------|-------|
+| Recall-First (Clinical Screening) | 🧠 NeuralNetwork_Tuned | Recall ≈ 0.815 | Highest sensitivity, minimal overfitting, ideal for early-risk detection |
+| Balanced F1-Performance (Generalization) | 🌲 RandomForest_Tuned | F1 ≈ 0.383 · ROC-AUC ≈ 0.796 | Best test F1, excellent precision–recall balance, strong stability |
+| Explainability & AUC Focus | 🚀 XGBoost_Tuned | F1 ≈ 0.382 · ROC-AUC ≈ 0.804 | Slightly higher AUC, best candidate for SHAP/LIME visualization |
+| Precision-Friendly Backup | ⚙️ LogisticRegression_Tuned | Recall ≈ 0.709 · Precision ≈ 0.260 | Linear, interpretable, reliable comparison baseline |
+
+![Post-Tuning F1 Comparison](../results/plots/post_tuning_f1_comparison.png)
+
+Together, these models form a complementary suite — Neural Network for recall-first clinical screening, Random Forest for balanced generalization, and XGBoost for explainable insights — providing a robust foundation for Week 5–6 Explainability & Threshold Calibration work.
+
+These results reflect finalized Week 3–4 tuning and diagnostics outputs logged in `results/metrics/model_diagnostics.csv` and visualized in `results/plots/post_tuning_f1_comparison.png`.
+
+### Error Pattern Analysis
+- **False positives dominate tuned models:** LogisticRegression_Tuned, RandomForest_Tuned, and XGBoost_Tuned now deliver ~87–88 % false positives (by design) while neural_network_tuned keeps false negatives to ~6 % at the cost of ~94 % false positives. This validates the recall-first setup, but flags threshold calibration as the next action.
+- **Neural network signals:** high false-positive scores align with low self-perceived health (`numeric__health`), high perceived effort (`numeric__flteeff`), and poorer sleep/rest (`numeric__slprl`). False negatives cluster around respondents reporting higher life enjoyment and sport frequency, indicating potential scaling/interaction refinements.
+- **Actionable next step:** carry these cues into Week 5–6 threshold experiments and XAI inspections (LIME/SHAP) so clinical stakeholders can agree on acceptable trade-offs for the Gradio demo.
+- **Threshold sweep:** probability thresholds from 0.2–0.8 for all tuned models are captured in `results/metrics/threshold_sweep.csv`; NeuralNetwork_Tuned keeps recall >0.75 until ≈0.45, while RandomForest_Tuned and XGBoost_Tuned regain precision beyond 0.55. Recommended max-F1 thresholds (0.60–0.65) are logged in `results/metrics/threshold_recommendations.csv` to kick-start Week 5–6 calibration.
+
 ## Suggested Visuals for Presentation
 - Updated metric comparison chart (F1 / Precision / Recall) exported from `notebooks/03_modeling.ipynb`.
 - Side-by-side confusion matrices (pre- vs. post-tuning) to illustrate improvements.
