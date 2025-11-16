@@ -1,0 +1,21 @@
+# Python cache and venv
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter and notebook checkpoints
+notebooks/.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Data and results (not needed in image)
+data/
+results/
+
+# Git and editor files
+.git/
+.vscode/
+.DS_Store
+*.log
+.env

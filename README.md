@@ -10,7 +10,7 @@ This repository hosts a three-month MSc research project focused on predicting h
 
 - Ingested and documented ~42k survey records (`data/raw/heart_data.csv`) with cleaned feature names and descriptions (`data/processed/feature_names.csv`, `data/data_dictionary.md`).
 
-- Established an exploratory analysis workflow (`notebooks/01_exploratory_analysis.ipynb`) covering missingness, distributions, correlation heatmaps, VIF, and outlier diagnostics with outputs saved under `results/metrics/` and `results/plots/`.
+- Established an exploratory analysis workflow (`notebos/01_exploratory_analysis.ipynb`) covering missingness, distributions, correlation heatmaps, VIF, and outlier diagnostics with outputs saved under `results/metrics/` and `results/plots/`.
 
 - Implemented a reproducible preprocessing pipeline (`src/data_preprocessing.py`) that cleans the raw CSV, imputes missing values (median for numeric, mode for categorical), caps extreme outliers via IQR, standardises numeric features, one-hot encodes categoricals, and exports stratified train/validation/test splits.
 
@@ -20,7 +20,7 @@ This repository hosts a three-month MSc research project focused on predicting h
 
 - Delivered a recall-first tuning workflow (`src/tuning/randomized_search.py`) embracing Logistic Regression, Random Forest, XGBoost, and an upgraded neural network defined in `src/models/neural_network.py`. Diagnostics (train/validation recall deltas, fit status) are logged to `results/metrics/model_diagnostics.csv`, and the leading model snapshot is persisted under `results/models/best_model.{joblib|pt}`.
 
-- Logged baseline and tuning experiments in `notebooks/03_modeling.ipynb`, which now orchestrates model training, evaluation refreshes, post-tuning comparisons, and artefact inspection. Meeting outcomes are tracked in `reports/biweekly_meeting_1.md` (Week 1–2) and `reports/biweekly_meeting_2.md` (Week 3–4).
+- Logged baseline and tuning experiments in `notebos/03_modeling.ipynb`, which now orchestrates model training, evaluation refreshes, post-tuning comparisons, and artefact inspection. Meeting outcomes are tracked in `reports/biweekly_meeting_1.md` (Week 1–2) and `reports/biweekly_meeting_2.md` (Week 3–4).
 
 ---
 
@@ -32,7 +32,7 @@ health_xai_project/
 │   ├── raw/                     # Original survey datasets (read-only)
 │   ├── processed/               # Clean splits + artefacts (train/val/test, mappings)
 │   └── data_dictionary.md       # Auto-generated feature documentation
-├── notebooks/
+├── notebos/
 │   ├── 01_exploratory_analysis.ipynb
 │   ├── 02_data_processing.ipynb
 │   ├── 03_modeling.ipynb
@@ -95,15 +95,15 @@ python -m src.evaluate_models
 python -m src.tuning.randomized_search
 ```
 
-### 3. Explore in Notebooks
+### 3. Explore in Notebos
 
-- `notebooks/01_exploratory_analysis.ipynb` — Re-run for exploratory visuals generated from the processed dataset.
+- `notebos/01_exploratory_analysis.ipynb` — Re-run for exploratory visuals generated from the processed dataset.
 
-- `notebooks/02_data_processing.ipynb` — Sandbox for alternative imputation/encoding strategies prior to updating `src/data_preprocessing.py`.
+- `notebos/02_data_processing.ipynb` — Sandbox for alternative imputation/encoding strategies prior to updating `src/data_preprocessing.py`.
 
-- `notebooks/03_modeling.ipynb` — End-to-end baseline and tuning workflow: training, evaluation, diagnostics, and tuned-vs-baseline comparisons.
+- `notebos/03_modeling.ipynb` — End-to-end baseline and tuning workflow: training, evaluation, diagnostics, and tuned-vs-baseline comparisons.
 
-Each notebook prepends the project root to `sys.path` to enable `from src...` imports when run inside the `notebooks/` directory.
+Each notebo prepends the project root to `sys.path` to enable `from src...` imports when run inside the `notebos/` directory.
 
 ---
 
@@ -156,8 +156,29 @@ Each notebook prepends the project root to `sys.path` to enable `from src...` im
 
 ## License
 
-A final license will be selected in consultation with supervisors; the current placeholder lives in `LICENSE`.
+This project is distributed under the [MIT License](LICENSE).
 
 ---
 
-For questions, collaboration ideas, or feedback, feel free to open an issue. Weeks 1–2 laid the groundwork—stay tuned as optimisation, explainability, and deployment phases unfold.
+## Upcoming Focus: Weeks 5–6 (Local XAI Integration)
+
+- Integrate LIME and SHAP explainers across NeuralNetwork_Tuned, RandomForest_Tuned, and XGBoost_Tuned.  
+- Compare interpretability trends and capture insights in the Methods/Results drafts.  
+- Dockerise the XAI workflow (plus README instructions) so collaborators can reproduce the explainability runs via `.venv` or Docker.
+
+These tasks prepare the Week 7–8 Gradio demo + threshold calibration sprint.
+
+## How to Run the Week 5–6 XAI Notebook
+
+1. **Activate the environment**
+   ```bash
+   cd /Users/peter/AI_ML_Projects/health_xai_project
+   source .venv/bin/activate
+   python -m pip install --upgrade pip
+   python -m pip install shap lime
+   ```
+2. **Launch the explainer notebook** – open `notebooks/05_explainability_tests.ipynb` in VS Code or Jupyter and run the cells for `NeuralNetwork_Tuned`, `RandomForest_Tuned`, and `XGBoost_Tuned`.
+3. **Persist artefacts** – save SHAP summary plots, force plots, and LIME explanations to `results/explainability/` so they can be referenced in reports.
+4. **Log findings** – update `reports/biweekly_meeting_2.md` and `reports/project_plan_and_roadmap.md` with any feature insights or threshold action items you discover.
+
+_Automated note: README confirmed writable after Week 5–6 prep._
