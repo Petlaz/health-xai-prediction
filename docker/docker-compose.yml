@@ -1,1 +1,44 @@
-# TODO: configure Docker Compose services
+# docker-compose.yml
+# Defines two services:
+#   - notebook: runs Jupyter Lab for experimentation
+#   - app: runs the future Gradio demo
+# Both share the repo volume so Mac edits sync into the containers.
+
+version: "3.9"
+
+services:
+  notebook:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: health_xai_notebook
+    ports:
+      - "8888:8888"  # expose notebook port
+    volumes:
+      - ..:/app:delegated  # mirror repo (macOS-friendly)
+    working_dir: /app
+    environment:
+      PROJECT_ROOT: /app
+      JUPYTER_TOKEN: ""  # disable token; rely on VS Code tunnel
+    command: >
+      bash -c "
+        source .venv/bin/activate 2>/dev/null || true &&
+        jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+      "
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: health_xai_gradio
+    ports:
+      - "7860:7860"  # expose Gradio UI
+    volumes:
+      - ..:/app:delegated
+    working_dir: /app
+    environment:
+      PROJECT_ROOT: /app
+      GRADIO_SERVER_NAME: 0.0.0.0
+      GRADIO_SERVER_PORT: 7860
+      GRADIO_SHARE: "true"
+    command: /bin/bash -c "/app/docker/entrypoint_app.sh"

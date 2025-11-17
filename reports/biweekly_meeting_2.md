@@ -56,3 +56,10 @@ These results reflect finalized Week 3–4 tuning and diagnostics outputs logged
 ## Suggested Visuals for Presentation
 - Updated metric comparison chart (F1 / Precision / Recall) exported from `notebooks/03_modeling.ipynb`.
 - Side-by-side confusion matrices (pre- vs. post-tuning) to illustrate improvements.
+
+## Week 5–6 Explainability Kickoff
+
+- **Automation:** Added `src/explainability.py` so `python -m src.explainability --dataset validation --sample-size 120` (or `--dataset test`) saves SHAP dot/bar plots, per-patient force plots (PNG), LIME HTML reports, and a manifest (`results/explainability/xai_summary_<split>.csv`) for the tuned RandomForest, XGBoost, and NeuralNetwork models.
+- **Feature drivers:** Across both validation and test splits, `numeric__health` dominates mean |SHAP| values, with lifestyle levers—`numeric__dosprt` (sport frequency), `numeric__flteeff` (everything felt an effort), `numeric__slprl` (restless sleep), `numeric__weighta`/`numeric__height`, `numeric__cgtsmok`, and `numeric__happy`—forming the second tier. NeuralNetwork_Tuned also leans on diet (`numeric__etfruit`) and gender encoding (`numeric__gndr`), while XGBoost_Tuned accentuates smoking intensity and body-mass features, reinforcing where clinical narratives should focus.
+- **Local patterns:** LIME cases (saved per model) show high-risk predictions clustering around poor self-rated health paired with inactivity, depressive affect, and sleep problems; false positives often arise from respondents reporting moderate activity but lingering fatigue, signalling candidates for threshold tuning and clinician review.
+- **Next step:** Use `results/explainability/*_top_features.csv` plus the existing `results/metrics/threshold_{sweep,recommendations}.csv` to prioritise which features deserve calibrated messaging in the Week 7–8 Gradio demo (e.g., flagging when sedentary lifestyles drive a neural-network alert versus when anthropometrics dominate tree-based alerts).

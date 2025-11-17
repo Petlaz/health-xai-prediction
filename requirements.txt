@@ -12,3 +12,6 @@ ipykernel>=6.26,<7.0
 # Explainability packages for Week 5-6
 lime>=0.2.0.1,<0.3
 shap>=0.41.0,<0.46
+gradio>=4.44,<5.0
+huggingface-hub>=0.23,<1.0
+jupyterlab>=4.2,<4.4

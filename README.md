@@ -26,36 +26,45 @@ This repository hosts a three-month MSc research project focused on predicting h
 
 ## Repository Structure
 ```
-
 health_xai_project/
+├── app/                         # Gradio demo (Week 7 preview)
+│   ├── __init__.py
+│   └── app_gradio.py
 ├── data/
 │   ├── raw/                     # Original survey datasets (read-only)
 │   ├── processed/               # Clean splits + artefacts (train/val/test, mappings)
 │   └── data_dictionary.md       # Auto-generated feature documentation
-├── notebos/
+├── docker/
+│   ├── Dockerfile               # Shared runtime for notebooks + Gradio
+│   ├── docker-compose.yml       # notebook/app services
+│   ├── entrypoint_app.sh        # Fetches frpc + launches Gradio inside Docker
+│   └── requirements.txt
+├── docs/                        # Misc. references (sprint notes, figures, etc.)
+├── notebooks/
 │   ├── 01_exploratory_analysis.ipynb
 │   ├── 02_data_processing.ipynb
 │   ├── 03_modeling.ipynb
 │   ├── 04_error_analysis.ipynb
 │   └── 05_explainability_tests.ipynb
+├── reports/
+│   ├── biweekly_meeting_1.md … biweekly_meeting_6.md
+│   ├── project_plan_and_roadmap.md
+│   ├── literature_review.md
+│   └── final_report_draft.md
 ├── results/
 │   ├── metrics/                 # CSV summaries, diagnostics logs, classification reports
 │   ├── confusion_matrices/      # Confusion matrix heatmaps
 │   ├── plots/                   # ROC/PR curves, distribution charts, tuning visuals
-│   └── explanations/            # Placeholder for Week 5–6 XAI outputs
-├── src/
-│   ├── data_preprocessing.py    # EDA + preprocessing pipeline
-│   ├── train_models.py          # Baseline model training orchestration
-│   ├── evaluate_models.py       # Evaluation and error analysis (baseline + tuned)
-│   ├── models/
-│   │   └── neural_network.py    # HealthNN architecture + device helpers
-│   ├── tuning/
-│   │   └── randomized_search.py # Recall-first tuning utilities
-│   └── utils.py                 # Shared helpers (model IO, plotting, dictionary sync)
-└── reports/
-    ├── biweekly_meeting_1.md    # Week 1–2 meeting summary
-    ├── biweekly_meeting_2.md    # Week 3–4 tuning summary
-    └── project_plan_and_roadmap.md
+│   └── explainability/          # SHAP/LIME artefacts + manifests
+└── src/
+    ├── data_preprocessing.py    # EDA + preprocessing pipeline
+    ├── train_models.py          # Baseline model training orchestration
+    ├── evaluate_models.py       # Evaluation and error analysis (baseline + tuned)
+    ├── models/neural_network.py # HealthNN architecture + device helpers
+    ├── tuning/randomized_search.py
+    └── utils.py                 # Shared helpers (model IO, plotting, dictionary sync)
+├── requirements.txt             # Host environment dependencies
+└── .venv/ (optional)            # Local virtual environment (ignored by Git)
 ```
 
 ---
@@ -128,6 +137,13 @@ Each notebo prepends the project root to `sys.path` to enable `from src...` impo
   - ⚙️ `LogisticRegression_Tuned` — recall ≈0.709, precision ≈0.260 (transparent baseline).
   - 🔧 Threshold sweep (0.2–0.8) for tuned models saved to `results/metrics/threshold_sweep.csv`, with max-F1 recommendations in `results/metrics/threshold_recommendations.csv` to guide Week 5–6 calibration.
 
+## Key Outputs (Weeks 5–6)
+
+- **Explainability Artefacts:** `results/explainability/{RandomForest_Tuned,XGBoost_Tuned,NeuralNetwork_Tuned}/` now contain SHAP dot/bar plots, force PNGs, LIME HTML reports, and `*_top_features.csv` derived from validation **and** test splits; manifests live in `results/explainability/xai_summary_<split>.csv`.
+- **Threshold Recommendations:** `results/metrics/threshold_recommendations.csv` codifies the best-F1 cutoffs from the tuning sweep (0.65 for LogisticRegression_Tuned/NeuralNetwork_Tuned/XGBoost_Tuned; 0.60 for RandomForest_Tuned) and feeds both the notebooks and the Gradio UI.
+- **Gradio + Docker:** `app/app_gradio.py` exposes all tuned models with threshold controls and SHAP highlights; `docker/docker-compose.yml` launches both the notebook and the Gradio service (with optional public share links) so supervisors can test the workflow end-to-end.
+- **Documentation refresh:** Meeting notes, the roadmap, and `final_report_draft.md` now summarise the Week 5–6 explainability findings and reference the new artefact locations.
+
 ---
 
 ## Roadmap Overview
@@ -179,6 +195,30 @@ These tasks prepare the Week 7–8 Gradio demo + threshold calibration sprint.
    ```
 2. **Launch the explainer notebook** – open `notebooks/05_explainability_tests.ipynb` in VS Code or Jupyter and run the cells for `NeuralNetwork_Tuned`, `RandomForest_Tuned`, and `XGBoost_Tuned`.
 3. **Persist artefacts** – save SHAP summary plots, force plots, and LIME explanations to `results/explainability/` so they can be referenced in reports.
-4. **Log findings** – update `reports/biweekly_meeting_2.md` and `reports/project_plan_and_roadmap.md` with any feature insights or threshold action items you discover.
+4. **Log findings** – update `reports/biweekly_meeting_2.md` and `reports/project_plan_and_roadmap.md` with any feature insights or threshold action items you discove
 
-_Automated note: README confirmed writable after Week 5–6 prep._
+### Week 5–6 CLI Explainability Runner
+
+For reproducible batch explanations outside the notebook, use the new CLI helper:
+
+```bash
+python -m src.explainability \
+  --dataset validation \
+  --sample-size 120 \
+  --background-size 35 \
+  --kernel-nsamples 80
+```
+
+- SHAP dot/bar plots, force plots (PNG), LIME HTML reports, and a summary manifest are saved under `results/explainability/{RandomForest_Tuned,XGBoost_Tuned,NeuralNetwork_Tuned}/`.
+- `results/explainability/xai_summary_<split>.csv` links every artefact plus the per-model top-feature CSVs that capture mean |SHAP| scores for the sampled cohort.
+- Adjust `--dataset test` or the sampling arguments to explore different splits; defaults keep runtime <1 minute on a laptop.
+
+### Gradio Demo (Week 7 Preview)
+
+Spin up the interactive UI (local or via Docker) to test the tuned models with their recommended thresholds and SHAP context:
+
+```bash
+python -m app.app_gradio
+```
+
+The demo loads the tuned RandomForest/XGBoost/NeuralNetwork models, applies the thresholds captured in `results/metrics/threshold_recommendations.csv`, and surfaces top SHAP contributions for each prediction. When run locally it prints both the `http://127.0.0.1:7860` endpoint and a public `*.gradio.live` link by default. To run inside Docker (which also exposes a share link), use `docker compose up app` after rebuilding so Gradio + SHAP dependencies are available.

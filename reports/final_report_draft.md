@@ -118,7 +118,13 @@ This research aims to bridge these gaps by:
 
 ---
 
-### 2.7 Summary
+### 2.7 Local Explainability & Deployment Readiness (Weeks 5–6)
+- **Automated explainability pipeline:** `src/explainability.py` now batches SHAP (TreeExplainer for RandomForest/XGBoost, KernelExplainer for the neural network) and LIME outputs for both validation and test splits. Artefacts—dot/bar plots, force PNGs, LIME HTML reports, and mean |SHAP| rankings—are stored under `results/explainability/{model}/`, with manifests (`xai_summary_<split>.csv`) to simplify documentation.
+- **Key feature signals:** Across both splits, self-reported health remains the dominant driver, followed by activity/fatigue markers (`numeric__dosprt`, `numeric__flteeff`, `numeric__slprl`) and anthropometrics/smoking habits (`numeric__weighta`, `numeric__height`, `numeric__cgtsmok`). NeuralNetwork_Tuned adds psychosocial cues (happiness, diet frequency), confirming complementary behaviours to highlight in the clinical discussion.
+- **Threshold recommendations:** The recall-first tuning sweep feeds into `results/metrics/threshold_recommendations.csv`; current max-F1 cutoffs sit at 0.65 for LogisticRegression_Tuned/NeuralNetwork_Tuned/XGBoost_Tuned and 0.60 for RandomForest_Tuned. These values are exposed to end users in the Gradio demo and will guide Week 7–8 calibration workshops.
+- **Dockerised delivery:** The notebook and Gradio services run inside Docker (`docker/docker-compose.yml`). The Gradio container runs `app/app_gradio.py`, surfaces each tuned model via a dropdown, applies the recommended threshold, and (for tree models) renders SHAP contributions inline. Shareable public links are supported by default to ease supervisor reviews.
+
+### 2.8 Summary
 
 The reviewed literature confirms the growing importance of interpretability in medical AI.  
 While ensemble and deep models yield strong predictive results, their lack of transparency limits real-world use.  

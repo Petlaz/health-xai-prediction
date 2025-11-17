@@ -19,6 +19,7 @@ RUN apt-get update -y \
         libssl-dev \
         libffi-dev \
         git \
+        curl \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------- Install heavy packages first (rarely change, better caching) ----------

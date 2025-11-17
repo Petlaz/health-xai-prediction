@@ -73,7 +73,17 @@ Existing models achieve good accuracy but:
 
 ---
 
-## 📚 6. References  
+## 🌐 6. Recent Insights (Weeks 5–6)
+
+- **Local explainability in practice:** Our SHAP/LIME rollout validates the claims from Lundberg & Lee (2017) and Alharbi et al. (2024); clinicians reacted most strongly to the *per-patient* narratives these methods provide, underscoring their role beyond academic benchmarks.
+- **Survey-scale generalisation:** The European Social Survey–sized cohort (~40k rows) echoes the need highlighted by Tiwari et al. (2023) for larger, more diverse populations; RandomForest/XGBoost behaved consistently across validation/test splits once we stabilised preprocessing and class weights.
+- **Human-in-the-loop delivery:** Inspired by Holzinger et al. (2019), we containerised the workflow and surfaced a Gradio interface so subject-matter experts can manipulate thresholds, view SHAP drivers, and reason about trade-offs without leaving the browser.
+
+These observations will feed directly into the Discussion section and the Gradio demonstration narrative in Weeks 7–8.
+
+---
+
+## 📚 7. References  
 
 *(Update as you add papers)*  
 

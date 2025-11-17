@@ -63,6 +63,8 @@ The project targets predictive modeling of heart-related risks using ~40,000 sur
 - **Deliverables:** XAI visualisations, interpretability report, Dockerised XAI pipeline.
 - **Reading:** *Interpretable ML* Ch. 4–6 · *Hands-On ML* Ch. 11 · *Designing ML Systems* Ch. 8
 
+> **Progress snapshot:** `python -m src.explainability` now batch-generates SHAP (dot/bar + force PNGs) and LIME HTML artefacts for **RandomForest_Tuned**, **XGBoost_Tuned**, and **NeuralNetwork_Tuned**, with manifests under `results/explainability/`. Early SHAP rankings show `numeric__health` (self-rated health), `numeric__dosprt` (sport frequency), `numeric__flteeff` (effort), `numeric__slprl` (restless sleep), and anthropometrics (`numeric__weighta`, `numeric__height`) driving both false positives and negatives. NeuralNetwork_Tuned additionally leans on psychosocial signals (`numeric__happy`, `numeric__etfruit`, `numeric__gndr`), highlighting where threshold calibration and clinician validation should focus next.
+
 ### Weeks 7–8 (Dec 2 – Dec 15): Gradio Demo Development & Report Progress
 
 - Build Gradio app for real-time predictions + explanations; integrate the tuned, best-performing model selected in earlier sprints.

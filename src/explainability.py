@@ -1,272 +1,434 @@
-"""Explainability helpers for the health-xai-prediction project.
+"""Explainability utilities for generating SHAP and LIME artefacts."""
 
-Provides small, well-tested functions to:
-- load tuned models and scaler from disk
-- provide predict_proba-style wrappers for use with LIME/SHAP
-- build LIME and SHAP explainers
-- generate and save explanation visualisations
+from __future__ import annotations
 
-The functions are intentionally lightweight so they can be imported
-by notebooks and the Gradio demo.
+import argparse
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Dict, Iterable, List, Sequence
 
-Notes
------
-This module assumes model artefacts live under `results/models/` and
-that processed data lives under `data/processed/` as used across the
-project notebooks.
-"""
-
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
-import os
-import logging
-
-import joblib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import shap
+import torch
+from lime.lime_tabular import LimeTabularExplainer
 
-try:
-	import torch
-except Exception:  # pragma: no cover - optional runtime
-	torch = None
+from src.evaluate_models import (
+    SCALED_FEATURE_MODELS,
+    TUNED_NEURAL_MODEL_NAME,
+    load_models,
+    load_splits,
+)
+from src.utils import ensure_directory
 
-try:
-	import lime.lime_tabular as lime_tabular
-except Exception:  # pragma: no cover - optional runtime
-	lime_tabular = None
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+EXPLAINABILITY_DIR = PROJECT_ROOT / "results" / "explainability"
 
-try:
-	import shap
-except Exception:  # pragma: no cover - optional runtime
-	shap = None
-
-from matplotlib import pyplot as plt
-
-# Import HealthNN for proper model loading
-try:
-	from models.neural_network import HealthNN
-except ImportError:
-	try:
-		from src.models.neural_network import HealthNN
-	except ImportError:
-		HealthNN = None
-
-LOG = logging.getLogger(__name__)
+CLASS_NAMES = ["No Heart Condition", "Heart Condition"]
 
 
-def _resolve_model_path(candidates: Iterable[str]) -> Optional[str]:
-	for p in candidates:
-		if os.path.exists(p):
-			return p
-	return None
+@dataclass
+class ModelExplainabilityConfig:
+    """Configuration for a model explainability run."""
+
+    model_key: str
+    pretty_name: str
+    shap_method: str  # "tree" or "kernel"
 
 
-def load_models(model_dir: str = "results/models") -> Dict[str, Any]:
-	"""Load tuned models and scaler from disk.
-
-	The function is permissive about filenames and will try a few
-	commonly used names from the project. Returns a dict with keys:
-	'xgboost', 'random_forest', 'neural_network', 'scaler' (where
-	available).
-	"""
-	models: Dict[str, Any] = {}
-
-	# XGBoost
-	xgb_candidates = [
-		os.path.join(model_dir, "xgboost_tuned.joblib"),
-		os.path.join(model_dir, "xgboost.joblib"),
-		os.path.join(model_dir, "xgboost_classifier.joblib"),
-		os.path.join(model_dir, "xgboost_tuned.pkl"),
-	]
-	xgb_path = _resolve_model_path(xgb_candidates)
-	if xgb_path:
-		models["xgboost"] = joblib.load(xgb_path)
-		LOG.info("Loaded XGBoost model from %s", xgb_path)
-
-	# Random Forest
-	rf_candidates = [
-		os.path.join(model_dir, "random_forest_tuned.joblib"),
-		os.path.join(model_dir, "random_forest.joblib"),
-		os.path.join(model_dir, "random_forest.pkl"),
-	]
-	rf_path = _resolve_model_path(rf_candidates)
-	if rf_path:
-		models["random_forest"] = joblib.load(rf_path)
-		LOG.info("Loaded RandomForest model from %s", rf_path)
-
-	# Neural network (PyTorch)
-	nn_candidates = [
-		os.path.join(model_dir, "neural_network_tuned.pt"),
-		os.path.join(model_dir, "neural_network.pt"),
-		os.path.join(model_dir, "best_model.pt"),
-	]
-	nn_path = _resolve_model_path(nn_candidates)
-	if nn_path and torch is not None and HealthNN is not None:
-		# Load checkpoint - typically a bare state dict from HealthNN
-		checkpoint = torch.load(nn_path, map_location="cpu")
-		
-		# Infer input_dim from first layer weights
-		if isinstance(checkpoint, dict):
-			first_layer_key = next((k for k in checkpoint.keys() if "layers.0" in k and "weight" in k), None)
-			if first_layer_key:
-				input_dim = checkpoint[first_layer_key].shape[1]
-				# Infer hidden_dim (usually 128)
-				hidden_dim = checkpoint[first_layer_key].shape[0]
-				# Instantiate model and load state
-				model = HealthNN(input_dim=input_dim, hidden_dim=hidden_dim)
-				model.load_state_dict(checkpoint)
-				models["neural_network"] = model
-				LOG.info("Loaded Neural Network model from %s (input_dim=%d, hidden_dim=%d)", nn_path, input_dim, hidden_dim)
-			else:
-				LOG.warning("Could not infer input_dim from checkpoint at %s", nn_path)
-		else:
-			LOG.warning("Unexpected checkpoint format at %s: %s", nn_path, type(checkpoint))
-
-	# Scaler
-	scaler_candidates = [
-		os.path.join(model_dir, "standard_scaler.joblib"),
-		os.path.join(model_dir, "scaler.joblib"),
-	]
-	scaler_path = _resolve_model_path(scaler_candidates)
-	if scaler_path:
-		models["scaler"] = joblib.load(scaler_path)
-		LOG.info("Loaded scaler from %s", scaler_path)
-
-	return models
-
-
-def get_predict_fn(model: Any, model_type: str = "sklearn") -> Callable[[np.ndarray], np.ndarray]:
-	"""Return a predict_proba-style function for LIME/SHAP.
-
-	Args:
-		model: Loaded model object (sklearn-like or torch.nn.Module)
-		model_type: 'sklearn'|'xgboost'|'pytorch'
-
-	Returns:
-		A function f(X: np.ndarray) -> np.ndarray with shape (n_samples, 2)
-		that returns probabilities for [class_0, class_1].
-	"""
-
-	if model_type in ("sklearn", "xgboost"):
-		def _sklearn_predict(X: np.ndarray) -> np.ndarray:
-			return model.predict_proba(X)
-
-		return _sklearn_predict
-
-	if model_type == "pytorch":
-		if torch is None:
-			raise RuntimeError("PyTorch is not available in the runtime")
-
-		def _torch_predict(X: np.ndarray) -> np.ndarray:
-			model.eval()
-			with torch.no_grad():
-				tensor = torch.FloatTensor(X)
-				out = model(tensor)
-				# handle logits / single-output
-				probs = torch.sigmoid(out).cpu().numpy()
-				# ensure shape (n,)
-				probs = probs.reshape(-1)
-				return np.vstack([1 - probs, probs]).T
-
-		return _torch_predict
-
-	raise ValueError(f"Unknown model_type: {model_type}")
-
-
-def build_lime_explainer(X_train: pd.DataFrame, feature_names: List[str], class_names: Optional[List[str]] = None):
-	"""Build a LIME Tabular explainer.
-
-	Returns the explainer instance. LIME is optional; the function will
-	raise a helpful error if the package is missing.
-	"""
-	if lime_tabular is None:
-		raise RuntimeError("LIME is not installed in the environment")
-
-	if class_names is None:
-		class_names = ["No Heart Condition", "Heart Condition"]
-
-	explainer = lime_tabular.LimeTabularExplainer(
-		training_data=X_train.values,
-		feature_names=feature_names,
-		class_names=class_names,
-		mode="classification",
-	)
-	return explainer
-
-
-def build_shap_explainers(models: Dict[str, Any], background: Optional[pd.DataFrame] = None) -> Dict[str, Any]:
-	"""Construct SHAP explainers for available models.
-
-	Uses TreeExplainer for tree-based models and KernelExplainer for
-	arbitrary models (e.g., neural networks) if `shap` is available.
-	"""
-	if shap is None:
-		raise RuntimeError("SHAP is not installed in the environment")
-
-	explainers: Dict[str, Any] = {}
-
-	# background sample for KernelExplainer
-	if background is None:
-		background = shap.sample(pd.DataFrame(np.zeros((1, 1))), 1)
-
-	if "xgboost" in models:
-		explainers["xgboost"] = shap.TreeExplainer(models["xgboost"])
-
-	if "random_forest" in models:
-		explainers["random_forest"] = shap.TreeExplainer(models["random_forest"])
-
-	if "neural_network" in models:
-		predict_fn = get_predict_fn(models["neural_network"], model_type="pytorch")
-		# KernelExplainer expects a function returning probability for class 1
-		def _kernel_fn(x):
-			proba = predict_fn(x)
-			return proba[:, 1]
-
-		explainers["neural_network"] = shap.KernelExplainer(_kernel_fn, background.values)
-
-	return explainers
-
-
-def explain_instance_lime(
-	explainer, predict_fn: Callable[[np.ndarray], np.ndarray],
-	instance: pd.Series, num_features: int = 10
-) -> Any:
-	"""Explain a single instance with LIME and return the explanation object."""
-	exp = explainer.explain_instance(instance.values, predict_fn, num_features=num_features)
-	return exp
-
-
-def explain_instance_shap(explainer, instance: pd.DataFrame) -> np.ndarray:
-	"""Compute shap values for a single instance.
-
-	Returns the raw shap values array (for the positive class when
-	TreeExplainer returns a list).
-	"""
-	shap_values = explainer.shap_values(instance)
-	if isinstance(shap_values, list):
-		# common for binary classification tree explainers
-		return shap_values[1]
-	return shap_values
-
-
-def save_figure(fig: plt.Figure, path: str, dpi: int = 300) -> None:
-	os.makedirs(os.path.dirname(path), exist_ok=True)
-	fig.savefig(path, bbox_inches="tight", dpi=dpi)
-
-
-def apply_threshold(probas: np.ndarray, thresh: float = 0.5) -> np.ndarray:
-	"""Map probability array (n,2) to binary labels using threshold on
-	class 1 probability.
-	"""
-	return (probas[:, 1] >= thresh).astype(int)
-
-
-__all__ = [
-	"load_models",
-	"get_predict_fn",
-	"build_lime_explainer",
-	"build_shap_explainers",
-	"explain_instance_lime",
-	"explain_instance_shap",
-	"save_figure",
-	"apply_threshold",
+MODEL_CONFIGS: List[ModelExplainabilityConfig] = [
+    ModelExplainabilityConfig("random_forest_tuned", "RandomForest_Tuned", "tree"),
+    ModelExplainabilityConfig("xgboost_tuned", "XGBoost_Tuned", "tree"),
+    ModelExplainabilityConfig(TUNED_NEURAL_MODEL_NAME, "NeuralNetwork_Tuned", "kernel"),
 ]
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Generate SHAP and LIME artefacts.")
+    parser.add_argument(
+        "--dataset",
+        choices=["validation", "test"],
+        default="validation",
+        help="Dataset split used for explanations.",
+    )
+    parser.add_argument(
+        "--sample-size",
+        type=int,
+        default=150,
+        help="Number of rows sampled for global SHAP plots.",
+    )
+    parser.add_argument(
+        "--background-size",
+        type=int,
+        default=40,
+        help="Background sample size for Kernel SHAP.",
+    )
+    parser.add_argument(
+        "--kernel-nsamples",
+        type=int,
+        default=100,
+        help="Number of SHAP Kernel samples (controls runtime).",
+    )
+    parser.add_argument(
+        "--lime-instances",
+        type=int,
+        default=2,
+        help="How many local LIME explanations to persist per model.",
+    )
+    parser.add_argument(
+        "--random-state",
+        type=int,
+        default=42,
+        help="Random seed for sampling operations.",
+    )
+    return parser.parse_args()
+
+
+def as_dataframe(data: pd.DataFrame | np.ndarray, feature_names: Sequence[str]) -> pd.DataFrame:
+    """Coerce input data to a DataFrame with consistent column ordering."""
+    if isinstance(data, pd.DataFrame):
+        return data.loc[:, feature_names]
+
+    array = np.asarray(data, dtype=float)
+    if array.ndim == 1:
+        array = array.reshape(1, -1)
+    return pd.DataFrame(array, columns=feature_names)
+
+
+def make_predict_function(
+    model_name: str,
+    model,
+    scaler,
+    feature_names: Sequence[str],
+) -> Callable[[pd.DataFrame | np.ndarray], np.ndarray]:
+    """Return a probability prediction function compatible with SHAP/LIME."""
+
+    def _predict(data: pd.DataFrame | np.ndarray) -> np.ndarray:
+        df = as_dataframe(data, feature_names)
+
+        if model_name in SCALED_FEATURE_MODELS:
+            features = scaler.transform(df)
+        else:
+            features = df
+
+        if model_name == TUNED_NEURAL_MODEL_NAME:
+            with torch.no_grad():
+                tensor = torch.tensor(features, dtype=torch.float32)
+                probs = torch.sigmoid(model(tensor)).numpy()
+        else:
+            if hasattr(model, "predict_proba"):
+                probs = model.predict_proba(features)[:, 1]
+            elif hasattr(model, "decision_function"):
+                decision = model.decision_function(features)
+                probs = 1.0 / (1.0 + np.exp(-decision))
+            else:
+                raise AttributeError(f"{model_name} does not expose probability predictions.")
+
+        probs = probs.reshape(-1, 1)
+        return np.hstack([1 - probs, probs])
+
+    return _predict
+
+
+def select_local_indices(probs: np.ndarray, threshold: float = 0.5) -> List[int]:
+    """Pick representative indices for positive/negative local explanations."""
+    indices = list(range(len(probs)))
+    positive = next((idx for idx in indices if probs[idx] >= threshold), None)
+    negative = next((idx for idx in indices if probs[idx] < threshold), None)
+
+    if positive is None and indices:
+        positive = int(np.argmax(probs))
+    if negative is None and indices:
+        negative = int(np.argmin(probs))
+
+    unique_indices = []
+    for idx in (positive, negative):
+        if idx is not None and idx not in unique_indices:
+            unique_indices.append(idx)
+    return unique_indices
+
+
+def extract_positive_shap_values(shap_values, expected_value):
+    """Return SHAP values and expectation for the positive class."""
+    if isinstance(shap_values, list):
+        if len(shap_values) > 1:
+            values = shap_values[1]
+            exp_val = expected_value[1] if isinstance(expected_value, Iterable) else expected_value
+        else:
+            values = shap_values[0]
+            exp_val = expected_value if not isinstance(expected_value, Iterable) else expected_value[0]
+        return values, exp_val
+
+    if isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
+        values = shap_values[..., -1]
+        if isinstance(expected_value, Iterable):
+            exp_vals = np.asarray(expected_value)
+            exp_val = exp_vals[-1] if exp_vals.ndim > 0 else float(exp_vals)
+        else:
+            exp_val = expected_value
+        return values, float(np.ravel([exp_val])[0])
+
+    if hasattr(shap_values, "values"):
+        # shap.Explanation
+        values = shap_values.values
+        base = shap_values.base_values
+        if isinstance(base, np.ndarray):
+            if base.ndim == 1:
+                exp_val = float(np.mean(base))
+            else:
+                exp_val = float(np.mean(base[:, -1]))
+        else:
+            exp_val = float(base)
+        return values, exp_val
+
+    return shap_values, expected_value if np.ndim(expected_value) == 0 else expected_value[0]
+
+
+def save_shap_summary(
+    model_name: str,
+    X_sample: pd.DataFrame,
+    shap_values: np.ndarray,
+    output_dir: Path,
+    kind: str = "dot",
+) -> Path:
+    """Persist a SHAP summary plot."""
+    ensure_directory(output_dir)
+    path = output_dir / f"{model_name}_shap_summary_{kind}.png"
+    plt.figure(figsize=(10, 6))
+    plot_type = "dot" if kind == "dot" else "bar"
+    kwargs = {"show": False, "plot_type": plot_type}
+    if kind == "dot":
+        kwargs["color"] = plt.get_cmap("coolwarm")
+    shap.summary_plot(shap_values, X_sample, **kwargs)
+    plt.tight_layout()
+    plt.savefig(path, dpi=300)
+    plt.close()
+    return path
+
+
+def save_shap_force_plot(
+    model_name: str,
+    expected_value: float,
+    shap_row: np.ndarray,
+    feature_row: pd.Series,
+    output_dir: Path,
+    label_suffix: str,
+) -> Path:
+    """Persist a SHAP force plot as HTML."""
+    ensure_directory(output_dir)
+    plt.figure(figsize=(9, 2.5))
+    shap.force_plot(
+        float(np.ravel([expected_value])[0]),
+        np.array(shap_row, dtype=float),
+        feature_row,
+        matplotlib=True,
+        show=False,
+    )
+    path = output_dir / f"{model_name}_force_{label_suffix}.png"
+    plt.tight_layout()
+    plt.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close()
+    return path
+
+
+def generate_tree_shap(
+    model_name: str,
+    model,
+    X_sample: pd.DataFrame,
+    output_dir: Path,
+) -> tuple[np.ndarray, float]:
+    """Compute SHAP values for tree-based models."""
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(X_sample, check_additivity=False)
+    positive_values, expected_value = extract_positive_shap_values(shap_values, explainer.expected_value)
+    dot_path = save_shap_summary(model_name, X_sample, positive_values, output_dir, kind="dot")
+    bar_path = save_shap_summary(model_name, X_sample, positive_values, output_dir, kind="bar")
+    print(f"[SHAP] Saved summary plots to {dot_path} and {bar_path}")
+    return positive_values, expected_value
+
+
+def generate_kernel_shap(
+    model_name: str,
+    predict_fn: Callable[[pd.DataFrame | np.ndarray], np.ndarray],
+    background: pd.DataFrame,
+    X_sample: pd.DataFrame,
+    nsamples: int,
+    output_dir: Path,
+) -> tuple[np.ndarray, float]:
+    """Compute SHAP values using the KernelExplainer."""
+    explainer = shap.KernelExplainer(lambda data: predict_fn(data)[:, 1], background)
+    shap_values = explainer.shap_values(X_sample, nsamples=nsamples)
+    positive_values, expected_value = extract_positive_shap_values(shap_values, explainer.expected_value)
+    dot_path = save_shap_summary(model_name, X_sample, positive_values, output_dir, kind="dot")
+    bar_path = save_shap_summary(model_name, X_sample, positive_values, output_dir, kind="bar")
+    print(f"[SHAP] Saved summary plots to {dot_path} and {bar_path}")
+    return positive_values, expected_value
+
+
+def save_lime_explanations(
+    model_name: str,
+    explainer: LimeTabularExplainer,
+    predict_fn: Callable[[pd.DataFrame | np.ndarray], np.ndarray],
+    instances: List[pd.Series],
+    instance_labels: List[str],
+    output_dir: Path,
+) -> List[Path]:
+    """Persist LIME explanations for provided instances."""
+    lime_paths: List[Path] = []
+    for row, label in zip(instances, instance_labels):
+        exp = explainer.explain_instance(
+            row.to_numpy(),
+            predict_fn,
+            num_features=10,
+            top_labels=1,
+        )
+        path = output_dir / f"{model_name}_lime_{label}.html"
+        exp.save_to_file(str(path))
+        lime_paths.append(path)
+    return lime_paths
+
+
+def build_lime_explainer(
+    X_train: pd.DataFrame,
+    feature_names: Sequence[str],
+    categorical_features: Sequence[int] | None = None,
+) -> LimeTabularExplainer:
+    """Initialise a LIME tabular explainer."""
+    categorical_features = list(categorical_features or [])
+    return LimeTabularExplainer(
+        training_data=X_train.loc[:, feature_names].to_numpy(),
+        feature_names=list(feature_names),
+        class_names=CLASS_NAMES,
+        categorical_features=categorical_features if categorical_features else None,
+        mode="classification",
+        discretize_continuous=True,
+    )
+
+
+def infer_categorical_indices(columns: Sequence[str]) -> List[int]:
+    """Return indices for one-hot encoded categorical columns."""
+    return [idx for idx, name in enumerate(columns) if name.startswith("categorical__")]
+
+
+def main() -> None:
+    args = parse_args()
+    np.random.seed(args.random_state)
+
+    splits = load_splits()
+    X_train = splits["X_train"]
+    feature_names = list(X_train.columns)
+
+    dataset_prefix = "val" if args.dataset == "validation" else "test"
+    X_target = splits[f"X_{dataset_prefix}"]
+    sample_size = min(args.sample_size, len(X_target))
+    sample_df = X_target.sample(n=sample_size, random_state=args.random_state).copy()
+    sample_df = sample_df.reset_index(drop=True)
+
+    models, scaler = load_models(input_dim=X_train.shape[1], include_tuned=True)
+
+    lime_explainer = build_lime_explainer(
+        X_train,
+        feature_names,
+        categorical_features=infer_categorical_indices(feature_names),
+    )
+
+    background_size = min(args.background_size, len(X_train))
+    kernel_background = X_train.sample(n=background_size, random_state=args.random_state)
+
+    ensure_directory(EXPLAINABILITY_DIR)
+    summary_records: List[Dict[str, object]] = []
+
+    for config in MODEL_CONFIGS:
+        model = models.get(config.model_key)
+        if model is None:
+            print(f"[WARN] {config.model_key} not found. Skipping.")
+            continue
+
+        model_dir = ensure_directory(EXPLAINABILITY_DIR / config.pretty_name)
+        predict_fn = make_predict_function(config.model_key, model, scaler, feature_names)
+
+        probs = predict_fn(sample_df)[:, 1]
+        selected_indices = select_local_indices(probs)
+        instance_rows = [sample_df.iloc[idx] for idx in selected_indices]
+        instance_labels = [f"idx{idx}_p{probs[idx]:.2f}" for idx in selected_indices]
+
+        if config.shap_method == "tree":
+            shap_values, expected_value = generate_tree_shap(
+                config.model_key,
+                model,
+                sample_df,
+                model_dir,
+            )
+        else:
+            shap_values, expected_value = generate_kernel_shap(
+                config.model_key,
+                predict_fn,
+                kernel_background,
+                sample_df,
+                nsamples=args.kernel_nsamples,
+                output_dir=model_dir,
+            )
+
+        importance = np.mean(np.abs(shap_values), axis=0)
+        importance_series = pd.Series(importance, index=sample_df.columns).sort_values(ascending=False)
+        top_features_path = model_dir / f"{config.model_key}_top_features.csv"
+        importance_series.to_csv(top_features_path, header=["mean_abs_shap"])
+
+        # Persist force plots for the selected rows.
+        force_paths = []
+        for idx, label in zip(selected_indices, instance_labels):
+            force_path = save_shap_force_plot(
+                config.model_key,
+                expected_value,
+                shap_values[idx],
+                sample_df.iloc[idx],
+                model_dir,
+                label,
+            )
+            print(f"[SHAP] Saved force plot to {force_path}")
+            force_paths.append(force_path)
+        lime_paths = save_lime_explanations(
+            config.model_key,
+            lime_explainer,
+            predict_fn,
+            instance_rows,
+            instance_labels,
+            model_dir,
+        )
+
+        summary_records.append(
+            {
+                "model": config.pretty_name,
+                "dataset": args.dataset,
+                "sample_size": sample_size,
+                "lime_examples": ", ".join(Path(path).name for path in lime_paths),
+                "shap_force_examples": ", ".join(path.name for path in force_paths),
+                "top_features_csv": top_features_path.name,
+            }
+        )
+
+    if summary_records:
+        summary_df = pd.DataFrame(summary_records)
+        summary_path = EXPLAINABILITY_DIR / f"xai_summary_{args.dataset}.csv"
+        summary_df.to_csv(summary_path, index=False)
+        print(f"[INFO] Logged explainability outputs to {summary_path}")
+    else:
+        print("[WARN] No explainability outputs were generated.")
+
+
+if __name__ == "__main__":
+    main()
+
+# Run the script with: python -m src.explainability \
+  #--dataset validation \
+  #--sample-size 120 \
+  #--background-size 35 \
+  #--kernel-nsamples 80
+
+# Dataset test: python -m src.explainability \
+  #--dataset test \
+  #--sample-size 120 \
+  #--background-size 35 \
+  #--kernel-nsamples 80
+
