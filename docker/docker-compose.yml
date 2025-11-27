@@ -41,4 +41,17 @@ services:
       GRADIO_SERVER_NAME: 0.0.0.0
       GRADIO_SERVER_PORT: 7860
       GRADIO_SHARE: "true"
-    command: /bin/bash -c "/app/docker/entrypoint_app.sh"
+    command: >
+      bash -c "
+        source .venv/bin/activate 2>/dev/null || true &&
+        python -m app.app_gradio
+      "
+
+# To bring up the services, run:
+#   docker-compose -f docker/docker-compose.yml up --build
+
+# To bring them down, run:
+#   docker-compose -f docker/docker-compose.yml down
+
+# To bring up only the notebook service, run:
+#   docker-compose -f docker/docker-compose.yml up notebook app

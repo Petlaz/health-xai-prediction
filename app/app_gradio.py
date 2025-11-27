@@ -319,18 +319,19 @@ def build_interface():
 
 if __name__ == "__main__":
     app = build_interface()
-    share_flag = os.getenv("GRADIO_SHARE", "true").lower() == "true"
-    server_name = os.getenv("GRADIO_SERVER_NAME")
+    share_flag = os.getenv("GRADIO_SHARE", "false").lower() == "true"
+    server_name = os.getenv("GRADIO_SERVER_NAME", "0.0.0.0")
     port_env = os.getenv("GRADIO_SERVER_PORT")
     try:
         server_port = int(port_env) if port_env else None
-    except (TypeError, ValueError):
+    except ValueError:
         server_port = None
 
-    launch_kwargs = {"share": share_flag}
-    if server_name:
-        launch_kwargs["server_name"] = server_name
-    if server_port:
-        launch_kwargs["server_port"] = server_port
+    app.launch(
+        share=share_flag,
+        server_name=server_name,
+        server_port=server_port,
+    )
 
-    app.launch(**launch_kwargs)
+# Run the app with:
+#   python -m app.app_gradio

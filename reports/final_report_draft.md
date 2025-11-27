@@ -10,11 +10,11 @@ Week 1–2 focused on establishing the technical foundations for the study: cura
 ## 2. Methods
 
 ### 2.1 Dataset Preparation
-- **Source:** European Health Survey CSV supplied by Nightingale Heart (≈42k rows, 52 engineered features after preprocessing).
+- **Source:** European Health Survey CSV supplied by Nightingale Heart (≈42k rows, ≈22 engineered numeric features after preprocessing).
 - **Targets:** Primary – `hltprhc` (heart condition, binary); secondary – `hltprhb` (high blood pressure) and `hltprdi` (diabetes) for future experiments.
 - **Cleaning steps:** Removed unnamed index column, standardised headers, and generated a feature mapping (`data/processed/feature_names.csv`) alongside an auto-built data dictionary (`data/data_dictionary.md`).
-- **Missingness:** Overall rate 0.25% (raw). Numeric attributes imputed with the median; categorical attributes imputed with the most frequent value to retain valid categories.
-- **Feature scaling/encoding:** Numeric features scaled via `StandardScaler`; categorical features one-hot encoded using `OneHotEncoder(handle_unknown="ignore")`. Processed splits (train/validation/test = 70/15/15, stratified) and the combined dataset (`health_clean.csv`) are saved to `data/processed/`.
+- **Missingness:** Overall rate 0.25% (raw). Numeric attributes imputed with the median; categorical attributes were dropped with `cntry`, leaving a fully numeric feature set.
+- **Feature scaling/encoding:** All remaining predictors are standardised via `StandardScaler` inside a `ColumnTransformer`. Processed splits (train/validation/test = 70/15/15, stratified) and the combined dataset (`health_clean.csv`) are saved to `data/processed/`.
 
 ### 2.2 Exploratory Data Analysis
 - `notebooks/01_exploratory_analysis.ipynb` documents summary statistics, class balance (positive class ≈11.32%), correlation heatmaps, VIF, and IQR-based outlier detection.
@@ -34,15 +34,88 @@ Week 1–2 focused on establishing the technical foundations for the study: cura
 - Docker image (`docker/Dockerfile`) provisions Python 3.11, system build tools, and installs project requirements for consistent execution across machines.
 - Experiment notebooks (`notebooks/02_data_processing_experiments.ipynb`, `notebooks/03_modeling_experiments.ipynb`) serve as scratchpads before formalising changes in the `src/` modules.
 
-### 2.6 Model Tuning & Diagnostics (Weeks 3–4)
-- **Objective:** maximise recall on the minority `hltprhc` class while monitoring generalisation. Each baseline model feeds into a `RandomizedSearchCV` pipeline scored on recall with stratified 5-fold CV; class weights (`class_weight='balanced'` for linear/tree models, `scale_pos_weight` for XGBoost) and decision thresholds are optimised to reduce false negatives.
-- **Neural network upgrades:** the PyTorch classifier (`HealthNN`) now incorporates batch normalisation, dropout (0.25–0.5), Adam with weight decay, and BCEWithLogitsLoss with `pos_weight` tuned to the class ratio. Randomised trials run 40 epochs with patience-based early stopping on validation recall.
-- **Diagnostics:** after each tuning sweep, recall metrics, train–validation deltas, and overfitting flags are logged to `results/metrics/model_diagnostics.csv`. The best estimator and associated scaler are persisted to `results/models/best_model.{pt|joblib}` for downstream XAI and threshold calibration.
-- **Outcome:** NeuralNetwork_Tuned achieved validation recall ≈0.79 (test ≈0.815, Δ≈0.02), while RandomForest_Tuned and XGBoost_Tuned delivered the top F1/ROC-AUC trade-offs (≈0.383/0.796 and ≈0.382/0.804 respectively). A threshold sweep (0.2–0.8) stored in `results/metrics/threshold_sweep.csv`—with max-F1 recommendations recorded in `results/metrics/threshold_recommendations.csv`—now guides Week 5–6 calibration and XAI interpretation.
+### 2.6 Model Tuning & Diagnostics (Weeks 3–4 Results)
+- **Tuning methodology completed:** All models optimized using `RandomizedSearchCV` with 5-fold stratified cross-validation, F1 optimization, and balanced class handling.
+- **Neural network enhancements implemented:** PyTorch classifier extended with batch normalization, dropout (0.3-0.5), Adam optimizer with weight decay, and BCEWithLogitsLoss with pos_weight adjustment.
+- **Performance achievements:** Random Forest Tuned achieved best test F1 (0.3832), Neural Network Tuned highest recall (0.6843), all models maintained <5% train-validation gaps indicating good generalization.
+- **Diagnostics completed:** Comprehensive 11-section error analysis framework implemented covering class imbalance, subgroup performance, model behavior, calibration assessment, and clinical risk evaluation.
+
+### 2.7 Comprehensive Error Analysis Framework
+- **Clinical risk assessment:** MODERATE risk level identified with 87.8% false positive rate requiring threshold optimization and clinical confirmation protocols.
+- **Model calibration evaluation:** Poor probability calibration detected (ECE: 0.304, target <0.05) necessitating recalibration before clinical deployment.
+- **Feature impact analysis:** Health status dominates predictions (effect size: 1.99) followed by perceived effort, depression, and life enjoyment factors.
+- **Cross-model validation:** High agreement (94-97%) between tuned models with 17% samples in uncertain prediction range (0.4-0.6 probability).
+- **Error pattern identification:** Two distinct error clusters identified with different health behavior patterns, BMI showing over-prediction in high-risk patients.
 
 ---
 
-## 🧠 3. State of the Art
+## 3. Results (Week 3-4: Model Tuning & Error Analysis)
+
+### 3.1 Hyperparameter Tuning Results
+
+**Best Performing Models (Test Set Performance):**
+
+| Model | Test F1 | Precision | Recall | ROC-AUC | Clinical Use Case |
+|-------|---------|-----------|--------|---------|------------------|
+| Random Forest Tuned | 0.3832 | 0.2614 | 0.7177 | 0.7844 | **Best balanced performance** |
+| XGBoost Tuned | 0.3742 | 0.2536 | 0.7135 | 0.7968 | **Highest AUC for explainability** |
+| Neural Network Tuned | 0.3769 | 0.2600 | 0.6843 | 0.7930 | **Recall-optimized screening** |
+| Logistic Regression Tuned | 0.3789 | 0.2574 | 0.7177 | 0.7856 | **Interpretable baseline** |
+
+**Key Achievements:**
+- All tuned models achieved <5% train-validation gap indicating excellent generalization
+- F1 scores improved by 15-25% over baseline models
+- Maintained high recall (67-72%) suitable for clinical screening applications
+- Cross-model agreement of 94-97% demonstrates reliability
+
+### 3.2 Comprehensive Error Analysis Results
+
+**Clinical Risk Assessment:**
+- **Primary Model:** Random Forest Tuned (selected for balanced performance)
+- **Error Rate:** 26.1% (1,661/6,357 test samples)
+- **Error Distribution:** 87.8% false positives, 12.2% false negatives
+- **Clinical Risk Level:** MODERATE (over-diagnosis tendency)
+- **Impact Assessment:** Unnecessary interventions, increased costs, patient anxiety
+
+**Model Calibration Analysis:**
+- **Expected Calibration Error (ECE):** 0.304 (critical threshold: <0.05)
+- **Brier Score:** 0.185 (indicates poor probability reliability)
+- **Calibration Quality:** POOR - requires immediate recalibration
+- **Clinical Implication:** Current probabilities unsuitable for direct clinical decision-making
+
+**Feature Impact & Error Patterns:**
+- **Dominant Feature:** Health status (`numeric__health`) - effect size: 1.99
+- **Secondary Drivers:** Perceived effort, depression symptoms, life enjoyment, social engagement
+- **Error Clustering:** Two distinct behavioral patterns identified
+- **BMI Analysis:** Over-prediction increases with higher BMI (91.8% false positives in high BMI group)
+
+**Decision Support Insights:**
+- **Risk Stratification Performance:**
+  - Low risk (0.0-0.3): 97.9% negative predictive value
+  - High risk (0.7-1.0): Only 38.4% positive predictive value
+- **Threshold Optimization:** Optimal F1 performance at 0.5-0.6 probability range
+- **Clinical Deployment Readiness:** Requires calibration enhancement and confidence reporting
+
+### 3.3 Actionable Clinical Recommendations
+
+**Immediate Actions (1-2 weeks):**
+1. Implement threshold optimization based on clinical cost-benefit analysis
+2. Add prediction confidence reporting with uncertainty estimates
+3. Establish human-in-the-loop protocols for high-uncertainty predictions
+
+**Short-term Improvements (1-2 months):**
+1. Apply Platt scaling or isotonic regression for probability calibration
+2. Develop age and risk-stratified performance monitoring
+3. Implement clinical decision support framework with override tracking
+
+**Long-term Enhancements (3-6 months):**
+1. Advanced ensemble methods with meta-learning approaches
+2. Comprehensive clinical integration with feedback loops
+3. Continuous model monitoring and recalibration systems
+
+---
+
+## 🧠 4. State of the Art
 
 ### 3.1 Introduction
 
@@ -84,7 +157,7 @@ Several recent studies (Holzinger et al., 2019; Caruana et al., 2015) emphasize 
 
 ---
 
-### 2.4 Integrating Predictive ML with Local Explainability
+### 3.4 Integrating Predictive ML with Local Explainability
 
 Modern healthcare AI research increasingly combines predictive power with interpretability:
 
@@ -96,7 +169,7 @@ However, few studies have applied **local XAI methods to large survey-based data
 
 ---
 
-### 2.5 Identified Research Gap
+### 3.5 Identified Research Gap
 
 From the literature, the following limitations remain evident:
 
@@ -107,7 +180,7 @@ From the literature, the following limitations remain evident:
 
 ---
 
-### 2.6 Contribution of This Project
+### 3.6 Contribution of This Project
 
 This research aims to bridge these gaps by:
 
@@ -118,13 +191,12 @@ This research aims to bridge these gaps by:
 
 ---
 
-### 2.7 Local Explainability & Deployment Readiness (Weeks 5–6)
-- **Automated explainability pipeline:** `src/explainability.py` now batches SHAP (TreeExplainer for RandomForest/XGBoost, KernelExplainer for the neural network) and LIME outputs for both validation and test splits. Artefacts—dot/bar plots, force PNGs, LIME HTML reports, and mean |SHAP| rankings—are stored under `results/explainability/{model}/`, with manifests (`xai_summary_<split>.csv`) to simplify documentation.
-- **Key feature signals:** Across both splits, self-reported health remains the dominant driver, followed by activity/fatigue markers (`numeric__dosprt`, `numeric__flteeff`, `numeric__slprl`) and anthropometrics/smoking habits (`numeric__weighta`, `numeric__height`, `numeric__cgtsmok`). NeuralNetwork_Tuned adds psychosocial cues (happiness, diet frequency), confirming complementary behaviours to highlight in the clinical discussion.
-- **Threshold recommendations:** The recall-first tuning sweep feeds into `results/metrics/threshold_recommendations.csv`; current max-F1 cutoffs sit at 0.65 for LogisticRegression_Tuned/NeuralNetwork_Tuned/XGBoost_Tuned and 0.60 for RandomForest_Tuned. These values are exposed to end users in the Gradio demo and will guide Week 7–8 calibration workshops.
-- **Dockerised delivery:** The notebook and Gradio services run inside Docker (`docker/docker-compose.yml`). The Gradio container runs `app/app_gradio.py`, surfaces each tuned model via a dropdown, applies the recommended threshold, and (for tree models) renders SHAP contributions inline. Shareable public links are supported by default to ease supervisor reviews.
+### 3.7 Local Explainability & Deployment Readiness (Weeks 5–8 Plan)
+- **Explainability pipeline:** Once tuned models are available, `src/explainability.py` and `notebooks/05_explainability_tests.ipynb` will be expanded to generate SHAP (TreeExplainer/KernelExplainer) and LIME artefacts for validation/test splits. Outputs will be written to `results/explainability/{model}/` with manifests to simplify documentation.
+- **Threshold recommendations:** Post-tuning metrics will drive a threshold sweep (`results/metrics/threshold_sweep.csv`) so we can recommend operating points before integrating XAI into the user-facing demo.
+- **Docker/Gradio integration:** Docker compose services and the Gradio UI (`app/app_gradio.py`) will be finalised in Weeks 7–8 so stakeholders can experiment with tuned models, adjust thresholds, and view local explanations without leaving the browser.
 
-### 2.8 Summary
+### 3.8 Summary
 
 The reviewed literature confirms the growing importance of interpretability in medical AI.  
 While ensemble and deep models yield strong predictive results, their lack of transparency limits real-world use.  

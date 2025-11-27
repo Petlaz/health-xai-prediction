@@ -43,6 +43,7 @@ FEATURE_DESCRIPTIONS = {
     "alcfreq": "Alcohol consumption frequency.",
     "height": "Self-reported height in centimeters.",
     "weighta": "Self-reported weight in kilograms.",
+    "bmi": "Body mass index derived from height and weight.",
     "fltdpr": "How often felt depressed in the last week.",
     "flteeff": "How often felt everything was an effort in the last week.",
     "slprl": "How often sleep was restless in the last week.",
@@ -102,8 +103,7 @@ def load_dataset(data_path: Path = RAW_DATA_PATH) -> pd.DataFrame:
     original_columns = df.columns.tolist()
     cleaned_columns = [clean_column_name(name) for name in original_columns]
     df.columns = cleaned_columns
-
-    save_feature_name_mapping(original_columns, cleaned_columns)
+    cleaned_to_original = dict(zip(cleaned_columns, original_columns))
 
     if TARGET_COLUMN not in df.columns:
         raise ValueError(f"Target column '{TARGET_COLUMN}' not found in dataset.")
@@ -115,6 +115,26 @@ def load_dataset(data_path: Path = RAW_DATA_PATH) -> pd.DataFrame:
             continue
         if df[column].dtype == object:
             df[column] = pd.to_numeric(df[column], errors="coerce")
+
+    if {"height", "weighta"}.issubset(df.columns):
+        height_m = (df["height"] / 100.0).where(lambda s: s > 0, np.nan)
+        bmi = df["weighta"] / np.square(height_m)
+        bmi = bmi.replace([np.inf, -np.inf], np.nan)
+        df["bmi"] = bmi
+        df = df.drop(columns=["height", "weighta"])
+        cleaned_to_original.pop("height", None)
+        cleaned_to_original.pop("weighta", None)
+        cleaned_to_original["bmi"] = "BMI (derived)"
+        print("[INFO] Added BMI feature and removed raw height/weight columns.")
+
+    if "cntry" in df.columns:
+        df = df.drop(columns=["cntry"])
+        cleaned_to_original.pop("cntry", None)
+        print("[INFO] Dropped 'cntry' feature (no categorical features remain).")
+
+    final_columns = df.columns.tolist()
+    final_originals = [cleaned_to_original.get(col, col) for col in final_columns]
+    save_feature_name_mapping(final_originals, final_columns)
 
     print(f"[INFO] Loaded dataframe with shape {df.shape}")
     return df

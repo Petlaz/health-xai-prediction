@@ -2,25 +2,52 @@
 
 **Predictive Modeling and Local Explainable AI (XAI) in Healthcare**
 
-This repository hosts a three-month MSc research project focused on predicting heart-related health risks from European survey data while providing local explanations (LIME, SHAP) for every model decision. The work progresses in biweekly sprints; this README summarises accomplishments through **Weeks 1–4**, covering both the foundational baseline work and the first optimisation milestone.
+This repository hosts a three-month MSc research project focused on predicting heart-related health risks from European survey data while providing local explanations (LIME, SHAP) for every model decision. The work progresses in biweekly sprints; this README summarises accomplishments through **Weeks 3–4**, covering model tuning optimization and comprehensive error analysis.
 
 ---
 
-## Weeks 1–4 Snapshot
+## Weeks 3–4 Achievements
 
-- Ingested and documented ~42k survey records (`data/raw/heart_data.csv`) with cleaned feature names and descriptions (`data/processed/feature_names.csv`, `data/data_dictionary.md`).
+### ✅ Hyperparameter Tuning Completed
+- **All models optimized:** Logistic Regression, Random Forest, XGBoost, SVM, and Neural Network using RandomizedSearchCV with 5-fold stratified cross-validation
+- **F1 optimization:** Focused on balanced performance with class imbalance handling  
+- **Generalization validated:** All tuned models achieve <5% train-validation gap
+- **Best performer identified:** Random Forest Tuned (Test F1: 0.3832, ROC-AUC: 0.7844)
 
-- Established an exploratory analysis workflow (`notebos/01_exploratory_analysis.ipynb`) covering missingness, distributions, correlation heatmaps, VIF, and outlier diagnostics with outputs saved under `results/metrics/` and `results/plots/`.
+### 🔍 Comprehensive Error Analysis Framework
+- **11-section ML diagnostic pipeline** implemented in `notebooks/04_error_analysis.ipynb`
+- **Clinical risk assessment:** MODERATE over-prediction tendency identified (87.8% false positives)
+- **Model calibration evaluation:** Poor probability reliability detected (ECE: 0.304) requiring recalibration
+- **Feature impact analysis:** Health status dominates predictions with 1.99 effect size
+- **Cross-model validation:** 94-97% agreement between tuned models demonstrates reliability
+- **Error clustering:** Two distinct behavioral patterns identified in misclassification analysis
 
-- Implemented a reproducible preprocessing pipeline (`src/data_preprocessing.py`) that cleans the raw CSV, imputes missing values (median for numeric, mode for categorical), caps extreme outliers via IQR, standardises numeric features, one-hot encodes categoricals, and exports stratified train/validation/test splits.
+### 📊 Key Performance Results
+| Model | Test F1 | Precision | Recall | ROC-AUC | Clinical Use Case |
+|-------|---------|-----------|--------|---------|------------------|
+| **Random Forest Tuned** | **0.3832** | 0.2614 | 0.7177 | 0.7844 | Best balanced performance |
+| XGBoost Tuned | 0.3742 | 0.2536 | 0.7135 | 0.7968 | Highest AUC for explainability |
+| Neural Network Tuned | 0.3769 | 0.2600 | 0.6843 | 0.7930 | Recall-optimized screening |
+| Logistic Regression Tuned | 0.3789 | 0.2574 | 0.7177 | 0.7856 | Interpretable baseline |
 
-- Trained baseline classifiers — Logistic Regression, Random Forest, XGBoost, and a PyTorch feed-forward neural network — via `src/train_models.py`, persisting artefacts within `results/models/`.
+### 💡 Actionable Clinical Insights
+- **Immediate actions:** Threshold optimization, confidence reporting, human-in-the-loop protocols
+- **Short-term improvements:** Probability calibration, risk-stratified monitoring, decision support framework  
+- **Long-term enhancements:** Advanced ensemble methods, clinical integration, continuous monitoring
 
-- Built an evaluation suite (`src/evaluate_models.py`) that computes accuracy/precision/recall/F1/ROC-AUC, generates confusion matrices, ROC and precision-recall curves, exports classification reports, and captures misclassified samples for downstream error analysis. The module now benchmarks both baseline and tuned artefacts.
+## Weeks 1–2 Foundation
 
-- Delivered a recall-first tuning workflow (`src/tuning/randomized_search.py`) embracing Logistic Regression, Random Forest, XGBoost, and an upgraded neural network defined in `src/models/neural_network.py`. Diagnostics (train/validation recall deltas, fit status) are logged to `results/metrics/model_diagnostics.csv`, and the leading model snapshot is persisted under `results/models/best_model.{joblib|pt}`.
+- Ingested ~42k survey responses (`data/raw/heart_data.csv`), derived BMI from height/weight, removed the `cntry` column so every predictor is numeric, and refreshed the feature mapping/data dictionary (`data/processed/feature_names.csv`, `data/data_dictionary.md`).
 
-- Logged baseline and tuning experiments in `notebos/03_modeling.ipynb`, which now orchestrates model training, evaluation refreshes, post-tuning comparisons, and artefact inspection. Meeting outcomes are tracked in `reports/biweekly_meeting_1.md` (Week 1–2) and `reports/biweekly_meeting_2.md` (Week 3–4).
+- Completed exploratory analysis in `notebooks/01_exploratory_analysis.ipynb`, covering missingness (overall ≈0.25%), class balance (hltprhc positives ≈11.3%), distributions, correlations, and IQR-based outlier checks with artefacts saved under `results/metrics/` and `results/plots/`.
+
+- Shipped a reproducible preprocessing pipeline (`src/data_preprocessing.py`) that drops rows missing the target, imputes median/mode values, caps extremes, fits a numeric-only `ColumnTransformer`, and exports stratified train/validation/test splits plus the consolidated `health_clean.csv`.
+
+- Trained baseline classifiers — Logistic Regression, Random Forest, XGBoost, SVM, and a PyTorch feed-forward neural network — via `src/train_models.py`, persisting artefacts within `results/models/` alongside the StandardScaler and cached splits.
+
+- Built an evaluation suite (`src/evaluate_models.py`) that computes accuracy/precision/recall/F1/ROC-AUC, generates confusion matrices, ROC and precision-recall curves, exports classification reports, and captures misclassified samples for downstream error analysis.
+
+- Logged baseline experiments in `notebooks/03_modeling.ipynb`, which orchestrates training, evaluation refreshes, and pre-tuning diagnostics (coefficients, feature importances, misclassified samples). Meeting notes for Weeks 1–2 live in `reports/biweekly_meeting_1.md`.
 
 ---
 
@@ -88,17 +115,20 @@ pip install -r requirements.txt
 
 > **Tip:** If you see a NumPy/Pandas binary mismatch, rerun the install command with `--force-reinstall`.
 
-### 2. Reproduce Week 1–4 Artefacts
+### 2. Reproduce Week 3–4 Results
 
 ```bash
 # Clean data, generate EDA outputs and processed splits
 python -m src.data_preprocessing
 
-# Train baseline models (LogReg, RF, XGB, NN) and persist artefacts
+# Train and tune models (includes hyperparameter optimization)
 python -m src.train_models
 
-# Evaluate models, export metrics, confusion matrices, ROC/PR curves, reports
-python -m src.evaluate_models
+# Comprehensive evaluation with tuned models
+python -m src.evaluate_models --include_tuned
+
+# Run comprehensive error analysis (11-section diagnostic framework)
+jupyter notebook notebooks/04_error_analysis.ipynb
 
 # Run recall-first tuning sweeps (persists tuned artefacts + diagnostics)
 python -m src.tuning.randomized_search
@@ -116,7 +146,7 @@ Each notebo prepends the project root to `sys.path` to enable `from src...` impo
 
 ---
 
-## Key Outputs (Weeks 1–4)
+## Key Outputs (Weeks 1–2)
 
 - **Processed Data:** `data/processed/{train,validation,test,health_clean}.csv`
 
@@ -124,25 +154,11 @@ Each notebo prepends the project root to `sys.path` to enable `from src...` impo
 
 - **EDA Metrics & Visuals:** `results/metrics/eda_summary.csv`, `results/plots/*`
 
-- **Model Artefacts:** `results/models/` (scaler, baseline + tuned models, neural network weights, cached splits, `best_model.joblib|pt`)
+- **Model Artefacts:** `results/models/` (standard scaler, baseline models, neural network weights, cached splits)
 
 - **Evaluation Results:** `results/metrics/metrics_summary.csv`, `results/metrics/classification_reports/*.csv`, `results/metrics/misclassified_samples.csv`
 
-- **Diagnostics:** `results/metrics/model_diagnostics.csv`, `results/confusion_matrices/*.png`, `results/plots/*_roc_curve.png`, `results/plots/*_precision_recall_curve.png`, `results/plots/post_tuning_f1_comparison.png`
-
-- **Week 3–4 Highlights:**  
-  - 🧠 `NeuralNetwork_Tuned` — validation recall ≈0.79, test recall ≈0.815, Δtrain-val ≈0.02 (recall-first clinical screening).  
-  - 🌲 `RandomForest_Tuned` — best F1 ≈0.383, ROC-AUC ≈0.796 (balanced generalisation).  
-  - 🚀 `XGBoost_Tuned` — F1 ≈0.382, ROC-AUC ≈0.804 (explainability focus).  
-  - ⚙️ `LogisticRegression_Tuned` — recall ≈0.709, precision ≈0.260 (transparent baseline).
-  - 🔧 Threshold sweep (0.2–0.8) for tuned models saved to `results/metrics/threshold_sweep.csv`, with max-F1 recommendations in `results/metrics/threshold_recommendations.csv` to guide Week 5–6 calibration.
-
-## Key Outputs (Weeks 5–6)
-
-- **Explainability Artefacts:** `results/explainability/{RandomForest_Tuned,XGBoost_Tuned,NeuralNetwork_Tuned}/` now contain SHAP dot/bar plots, force PNGs, LIME HTML reports, and `*_top_features.csv` derived from validation **and** test splits; manifests live in `results/explainability/xai_summary_<split>.csv`.
-- **Threshold Recommendations:** `results/metrics/threshold_recommendations.csv` codifies the best-F1 cutoffs from the tuning sweep (0.65 for LogisticRegression_Tuned/NeuralNetwork_Tuned/XGBoost_Tuned; 0.60 for RandomForest_Tuned) and feeds both the notebooks and the Gradio UI.
-- **Gradio + Docker:** `app/app_gradio.py` exposes all tuned models with threshold controls and SHAP highlights; `docker/docker-compose.yml` launches both the notebook and the Gradio service (with optional public share links) so supervisors can test the workflow end-to-end.
-- **Documentation refresh:** Meeting notes, the roadmap, and `final_report_draft.md` now summarise the Week 5–6 explainability findings and reference the new artefact locations.
+- **Diagnostics:** `results/confusion_matrices/*.png`, `results/plots/*_roc_curve.png`, `results/plots/*_precision_recall_curve.png`
 
 ---
 
@@ -150,6 +166,7 @@ Each notebo prepends the project root to `sys.path` to enable `from src...` impo
 
 | Weeks | Focus | Upcoming Deliverables |
 |-------|-------|-----------------------|
+| 1–2 | Data understanding, preprocessing, baseline models | Clean dataset, baseline metrics, Meeting 1 summary |
 | 3–4 | Hyperparameter tuning, validation, literature review | Optimised models, tuning notebooks, Meeting 2 summary |
 | 5–6 | Local XAI integration (LIME/SHAP) | Dockerised XAI workflows, interpretation report |
 | 7–8 | Gradio demo development | Interactive prediction + explanation UI, Dockerised demo |
@@ -176,49 +193,21 @@ This project is distributed under the [MIT License](LICENSE).
 
 ---
 
-## Upcoming Focus: Weeks 5–6 (Local XAI Integration)
+## Upcoming Focus: Weeks 3–4 (Model Optimisation & Validation)
 
-- Integrate LIME and SHAP explainers across NeuralNetwork_Tuned, RandomForest_Tuned, and XGBoost_Tuned.  
-- Compare interpretability trends and capture insights in the Methods/Results drafts.  
-- Dockerise the XAI workflow (plus README instructions) so collaborators can reproduce the explainability runs via `.venv` or Docker.
+- Run hyperparameter searches (RandomizedSearchCV + class weighting) for Logistic Regression, Random Forest, XGBoost, and the neural network with **recall-first** scoring.
+- Experiment with resampling/threshold calibration strategies to counter the ~11% positive class imbalance before re-evaluating on the validation/test splits.
+- Capture diagnostics (`results/metrics/model_diagnostics.csv`) and refresh `results/metrics/metrics_summary.csv` so every notebook/report reflects tuned metrics.
+- Begin compiling literature insights on recall-first clinical screening to feed the Week 3–4 meeting notes and final-report draft.
 
-These tasks prepare the Week 7–8 Gradio demo + threshold calibration sprint.
-
-## How to Run the Week 5–6 XAI Notebook
-
-1. **Activate the environment**
-   ```bash
-   cd /Users/peter/AI_ML_Projects/health_xai_project
-   source .venv/bin/activate
-   python -m pip install --upgrade pip
-   python -m pip install shap lime
-   ```
-2. **Launch the explainer notebook** – open `notebooks/05_explainability_tests.ipynb` in VS Code or Jupyter and run the cells for `NeuralNetwork_Tuned`, `RandomForest_Tuned`, and `XGBoost_Tuned`.
-3. **Persist artefacts** – save SHAP summary plots, force plots, and LIME explanations to `results/explainability/` so they can be referenced in reports.
-4. **Log findings** – update `reports/biweekly_meeting_2.md` and `reports/project_plan_and_roadmap.md` with any feature insights or threshold action items you discove
-
-### Week 5–6 CLI Explainability Runner
-
-For reproducible batch explanations outside the notebook, use the new CLI helper:
+### Week 3–4 CLI Tuning Workflow (planned)
 
 ```bash
-python -m src.explainability \
-  --dataset validation \
-  --sample-size 120 \
-  --background-size 35 \
-  --kernel-nsamples 80
+# Hyperparameter tuning (adds *_tuned models once ready)
+python -m src.tuning.randomized_search
+
+# Refresh evaluation artefacts so tuned models appear in metrics/plots
+python -m src.evaluate_models
 ```
 
-- SHAP dot/bar plots, force plots (PNG), LIME HTML reports, and a summary manifest are saved under `results/explainability/{RandomForest_Tuned,XGBoost_Tuned,NeuralNetwork_Tuned}/`.
-- `results/explainability/xai_summary_<split>.csv` links every artefact plus the per-model top-feature CSVs that capture mean |SHAP| scores for the sampled cohort.
-- Adjust `--dataset test` or the sampling arguments to explore different splits; defaults keep runtime <1 minute on a laptop.
-
-### Gradio Demo (Week 7 Preview)
-
-Spin up the interactive UI (local or via Docker) to test the tuned models with their recommended thresholds and SHAP context:
-
-```bash
-python -m app.app_gradio
-```
-
-The demo loads the tuned RandomForest/XGBoost/NeuralNetwork models, applies the thresholds captured in `results/metrics/threshold_recommendations.csv`, and surfaces top SHAP contributions for each prediction. When run locally it prints both the `http://127.0.0.1:7860` endpoint and a public `*.gradio.live` link by default. To run inside Docker (which also exposes a share link), use `docker compose up app` after rebuilding so Gradio + SHAP dependencies are available.
+These commands will be executed at the start of Week 3–4; rerun the visualization cells in `notebooks/03_modeling.ipynb` afterwards to compare baseline vs tuned performance.

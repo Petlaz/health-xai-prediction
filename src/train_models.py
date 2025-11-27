@@ -16,6 +16,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 from xgboost import XGBClassifier
 
 from src.utils import ensure_directory, save_model
@@ -197,6 +198,17 @@ def train_all_models() -> Dict[str, Path]:
         log_reg, MODEL_DIR / "logistic_regression.joblib"
     )
     print(f"✅ Trained Logistic Regression on {X_train.shape[0]} samples.")
+
+    # Support Vector Machine
+    svm = SVC(
+        kernel="rbf",
+        class_weight="balanced",
+        probability=True,
+        random_state=RANDOM_STATE,
+    )
+    svm.fit(X_train_scaled, y_train)
+    model_paths["svm"] = save_model(svm, MODEL_DIR / "svm.joblib")
+    print(f"✅ Trained SVM on {X_train.shape[0]} samples.")
 
     # Random Forest
     rf = RandomForestClassifier(

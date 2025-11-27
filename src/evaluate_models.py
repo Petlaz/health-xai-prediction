@@ -48,11 +48,13 @@ BASELINE_MODEL_PATHS = {
     "logistic_regression": MODEL_DIR / "logistic_regression.joblib",
     "random_forest": MODEL_DIR / "random_forest.joblib",
     "xgboost": MODEL_DIR / "xgboost_classifier.joblib",
+    "svm": MODEL_DIR / "svm.joblib",
 }
 TUNED_MODEL_PATHS = {
     "logistic_regression_tuned": MODEL_DIR / "logistic_regression_tuned.joblib",
     "random_forest_tuned": MODEL_DIR / "random_forest_tuned.joblib",
     "xgboost_tuned": MODEL_DIR / "xgboost_tuned.joblib",
+    "svm_tuned": MODEL_DIR / "svm_tuned.joblib",
 }
 NEURAL_MODEL_NAME = "neural_network"
 TUNED_NEURAL_MODEL_NAME = "neural_network_tuned"
@@ -63,6 +65,8 @@ SCALED_FEATURE_MODELS = {
     "logistic_regression_tuned",
     NEURAL_MODEL_NAME,
     TUNED_NEURAL_MODEL_NAME,
+    "svm",
+    "svm_tuned",
 }
 
 
@@ -92,6 +96,18 @@ def load_splits() -> Dict[str, pd.DataFrame]:
     return splits
 
 
+def _matches_feature_dim(model: object, expected_dim: int, name: str) -> bool:
+    """Return True if the model was fit on the expected number of features."""
+    n_features = getattr(model, "n_features_in_", expected_dim)
+    if n_features != expected_dim:
+        print(
+            f"[WARN] Skipping {name} (expected {expected_dim} features, "
+            f"but model was trained on {n_features})."
+        )
+        return False
+    return True
+
+
 def load_models(input_dim: int, include_tuned: bool = True) -> Tuple[Dict[str, object], object]:
     """Load trained models, scaler, and neural network architecture."""
     from sklearn.preprocessing import StandardScaler
@@ -105,7 +121,12 @@ def load_models(input_dim: int, include_tuned: bool = True) -> Tuple[Dict[str, o
 
     scaler: StandardScaler = load_model(SCALER_PATH)
 
-    models = {name: joblib.load(path) for name, path in BASELINE_MODEL_PATHS.items()}
+    raw_models = {name: joblib.load(path) for name, path in BASELINE_MODEL_PATHS.items()}
+    models = {
+        name: model
+        for name, model in raw_models.items()
+        if _matches_feature_dim(model, input_dim, name)
+    }
 
     if not NN_CONFIG_PATH.exists() or not NN_MODEL_PATH.exists():
         raise FileNotFoundError(
@@ -125,16 +146,24 @@ def load_models(input_dim: int, include_tuned: bool = True) -> Tuple[Dict[str, o
     if include_tuned:
         for name, path in TUNED_MODEL_PATHS.items():
             if path.exists():
-                models[name] = joblib.load(path)
+                model = joblib.load(path)
+                if _matches_feature_dim(model, input_dim, name):
+                    models[name] = model
 
         if TUNED_NN_MODEL_PATH.exists() and TUNED_NN_CONFIG_PATH.exists():
-            with TUNED_NN_CONFIG_PATH.open(encoding="utf-8") as handle:
-                tuned_config = json.load(handle)
-            tuned_hidden = int(tuned_config.get("hidden_dim", 128))
-            tuned_dropout = float(tuned_config.get("dropout", 0.3))
-            tuned_model = HealthNN(input_dim, tuned_hidden, tuned_dropout)
-            load_model(TUNED_NN_MODEL_PATH, tuned_model)
-            models[TUNED_NEURAL_MODEL_NAME] = tuned_model
+            try:
+                with TUNED_NN_CONFIG_PATH.open(encoding="utf-8") as handle:
+                    tuned_config = json.load(handle)
+                tuned_hidden = int(tuned_config.get("hidden_dim", 128))
+                tuned_dropout = float(tuned_config.get("dropout", 0.3))
+                tuned_model = HealthNN(input_dim, tuned_hidden, tuned_dropout)
+                load_model(TUNED_NN_MODEL_PATH, tuned_model)
+                models[TUNED_NEURAL_MODEL_NAME] = tuned_model
+            except RuntimeError as exc:
+                print(
+                    f"[WARN] Could not load tuned neural network "
+                    f"(dimension mismatch). Skipping. Details: {exc}"
+                )
 
     return models, scaler
 

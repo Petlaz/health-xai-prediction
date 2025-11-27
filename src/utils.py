@@ -281,26 +281,26 @@ def log_model_diagnostic(
     status: str,
     output_path: Path | str = PROJECT_ROOT / "results" / "metrics" / "model_diagnostics.csv",
 ) -> Path:
-    """Append model diagnostic information to a CSV log."""
-
+    """
+    Append model diagnostic information to a CSV log.
+    This version records train_f1 and val_f1 (rounded), the gap, and a diagnosis message.
+    """
     path = Path(output_path)
     ensure_directory(path.parent)
 
-    from pandas import DataFrame, read_csv
+    from pandas import DataFrame
 
-    if path.exists() and path.stat().st_size > 0:
-        existing = read_csv(path)
-        if "diagnosis" not in existing.columns and "status" in existing.columns:
-            existing = existing.rename(columns={"status": "diagnosis"})
-            existing.to_csv(path, index=False)
+    # Calculate gap for overfitting analysis
+    gap = round(float(train_score) - float(val_score), 4)
 
     record = DataFrame(
         [
             {
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "model": model_name,
-                "train_recall": round(train_score, 4),
-                "val_recall": round(val_score, 4),
+                "train_f1": round(float(train_score), 4),
+                "val_f1": round(float(val_score), 4),
+                "gap": gap,
                 "diagnosis": status,
             }
         ]
@@ -325,11 +325,13 @@ def get_top_model(diagnostics_path: Path | str = PROJECT_ROOT / "results" / "met
         print("⚠️ Diagnostics file empty.")
         return None
 
-    top = df.sort_values(by="val_recall", ascending=False).iloc[0]
+    # Sort by val_f1 (new F1-based schema)
+    top = df.sort_values(by="val_f1", ascending=False).iloc[0]
     print("\n🏆 **Top Performing Model Summary** 🏆")
     print(f"Model: {top['model']}")
-    print(f"Validation Recall: {top['val_recall']:.3f}")
-    print(f"Training Recall: {top['train_recall']:.3f}")
+    print(f"Validation F1: {top['val_f1']:.3f}")
+    print(f"Training F1: {top['train_f1']:.3f}")
+    print(f"Gap: {top['gap']:.3f}")
     print(f"Fit Diagnosis: {top['diagnosis']}")
     return top
 
@@ -383,7 +385,15 @@ def load_model(path: Path | str, model=None):
     if model is not None:
         import torch
 
-        state_dict = torch.load(path, map_location=torch.device("cpu"))
+        checkpoint = torch.load(path, map_location=torch.device("cpu"))
+        
+        # Handle new save format with nested structure
+        if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
+            state_dict = checkpoint["model_state_dict"]
+        else:
+            # Legacy format - checkpoint is the state_dict directly
+            state_dict = checkpoint
+            
         model.load_state_dict(state_dict)
         model.eval()
         return model
@@ -496,6 +506,95 @@ def plot_precision_recall_curve(
     plt.close()
 
     print(f"[INFO] Saved Precision-Recall curve to {path}")
+    return path
+
+
+def plot_train_val_trials(
+    trials: list[dict],
+    model_name: str,
+    save_dir: Path | str = PROJECT_ROOT / "results" / "plots",
+) -> Path:
+    """
+    Plot trial-wise train vs validation F1 scores.
+    trials: list of dicts with keys: 'trial', 'params', 'train_f1', 'val_f1'
+    Produces a scatter plot where x=train_f1, y=val_f1 and annotates best points.
+    """
+    import matplotlib.pyplot as plt
+    save_dir = ensure_directory(save_dir)
+    path = save_dir / f"{model_name}_train_vs_val_f1.png"
+
+    xs = [t["train_f1"] for t in trials]
+    ys = [t["val_f1"] for t in trials]
+
+    plt.figure(figsize=(8, 6))
+    plt.scatter(xs, ys, alpha=0.7, s=60, edgecolors='k', linewidth=0.5)
+    plt.xlabel("Train F1", fontsize=12)
+    plt.ylabel("Validation F1", fontsize=12)
+    plt.title(f"{model_name}: Train F1 vs Val F1 (per trial)", fontsize=14, fontweight='bold')
+    
+    # Perfect diagonal line (ideal case: train = val)
+    plt.plot([0, 1], [0, 1], linestyle="--", linewidth=1.5, color="gray", alpha=0.8, label="Perfect fit")
+    
+    # Annotate best validation F1 point
+    if trials:
+        best_idx = max(range(len(trials)), key=lambda i: trials[i]["val_f1"])
+        best_trial = trials[best_idx]
+        plt.scatter([xs[best_idx]], [ys[best_idx]], color="red", s=120, edgecolors="darkred", linewidth=2, label="Best Val F1")
+        plt.annotate(
+            f"Best Val F1: {best_trial['val_f1']:.3f}",
+            (xs[best_idx], ys[best_idx]),
+            textcoords="offset points",
+            xytext=(10, 10),
+            bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.7),
+            fontsize=10
+        )
+    
+    plt.xlim(0, 1)
+    plt.ylim(0, 1)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"[INFO] Saved trial plot to {path}")
+    return path
+
+
+def plot_neural_network_epochs(
+    epoch_data: list[dict],
+    model_name: str,
+    best_epoch: int,
+    save_dir: Path | str = PROJECT_ROOT / "results" / "plots",
+) -> Path:
+    """
+    Plot epoch-wise train vs validation F1 scores for Neural Network.
+    epoch_data: list of dicts with keys: 'epoch', 'train_f1', 'val_f1'
+    """
+    import matplotlib.pyplot as plt
+    save_dir = ensure_directory(save_dir)
+    path = save_dir / f"{model_name}_epoch_f1_curves.png"
+
+    epochs = [d["epoch"] for d in epoch_data]
+    train_f1s = [d["train_f1"] for d in epoch_data]
+    val_f1s = [d["val_f1"] for d in epoch_data]
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, train_f1s, 'b-', linewidth=2, label='Train F1', marker='o', markersize=4)
+    plt.plot(epochs, val_f1s, 'r-', linewidth=2, label='Validation F1', marker='s', markersize=4)
+    
+    # Mark best epoch
+    plt.axvline(x=best_epoch, color='green', linestyle='--', linewidth=2, alpha=0.7, label=f'Best Epoch ({best_epoch})')
+    
+    plt.xlabel("Epoch", fontsize=12)
+    plt.ylabel("F1 Score", fontsize=12)
+    plt.title(f"{model_name}: Learning Curves (F1 Score per Epoch)", fontsize=14, fontweight='bold')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.ylim(0, 1)
+    plt.tight_layout()
+    plt.savefig(path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"[INFO] Saved epoch plot to {path}")
     return path
 
 
