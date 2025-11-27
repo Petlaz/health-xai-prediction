@@ -1222,3 +1222,5 @@ if __name__ == "__main__":
         print(f"\n❌ ERROR: Tuning pipeline failed: {str(e)}")
         print("💡 Ensure you have run 'python -m src.train_models' first.")
         raise
+
+# CLI Execution: python -m src.tuning.randomized_search
