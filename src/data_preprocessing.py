@@ -18,15 +18,20 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-RAW_DATA_PATH = PROJECT_ROOT / "data" / "raw" / "heart_data.csv"
+RAW_DATA_PATH = PROJECT_ROOT / "data" / "raw" / "ess.csv"
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
-TARGET_COLUMN = "hltprhc"
+TARGET_COLUMN = "health"
 RANDOM_STATE = 42
 FEATURE_MAP_PATH = PROCESSED_DIR / "feature_names.csv"
+# Features to remove based on EDA analysis
+FEATURES_TO_REMOVE = ["cntry", "hltprhc", "hltprhb", "hltprdi", "height", "weighta"]
+
 FEATURE_ABBREVIATIONS = {
-    "hltprhc": "Heart condition",
-    "hltprhb": "Blood pressure",
-    "hltprdi": "Diabetes",
+    "health": "Self-rated general health (target)",
+    "bmi": "Body Mass Index (derived)",
+    "flteeff": "Mental effort feelings", 
+    "fltdpr": "Depression feelings",
+    "happy": "Happiness score",
 }
 
 FEATURE_DESCRIPTIONS = {
@@ -108,29 +113,38 @@ def load_dataset(data_path: Path = RAW_DATA_PATH) -> pd.DataFrame:
     if TARGET_COLUMN not in df.columns:
         raise ValueError(f"Target column '{TARGET_COLUMN}' not found in dataset.")
 
+    # Remove rows with missing target values
+    initial_rows = len(df)
     df = df.dropna(subset=[TARGET_COLUMN])
+    removed_rows = initial_rows - len(df)
+    if removed_rows > 0:
+        print(f"[INFO] Removed {removed_rows} rows with missing target values")
 
+    # Convert object columns to numeric (except country codes)
     for column in df.columns:
         if column == "cntry":
             continue
         if df[column].dtype == object:
             df[column] = pd.to_numeric(df[column], errors="coerce")
 
+    # Create BMI from height and weight before removing them
     if {"height", "weighta"}.issubset(df.columns):
+        print("[INFO] Creating BMI feature from height and weight")
         height_m = (df["height"] / 100.0).where(lambda s: s > 0, np.nan)
         bmi = df["weighta"] / np.square(height_m)
         bmi = bmi.replace([np.inf, -np.inf], np.nan)
         df["bmi"] = bmi
-        df = df.drop(columns=["height", "weighta"])
-        cleaned_to_original.pop("height", None)
-        cleaned_to_original.pop("weighta", None)
         cleaned_to_original["bmi"] = "BMI (derived)"
-        print("[INFO] Added BMI feature and removed raw height/weight columns.")
+        valid_bmi_count = df["bmi"].notna().sum()
+        print(f"[INFO] Created BMI feature with {valid_bmi_count} valid values")
 
-    if "cntry" in df.columns:
-        df = df.drop(columns=["cntry"])
-        cleaned_to_original.pop("cntry", None)
-        print("[INFO] Dropped 'cntry' feature (no categorical features remain).")
+    # Remove features identified in EDA analysis
+    cols_to_remove = [col for col in FEATURES_TO_REMOVE if col in df.columns]
+    if cols_to_remove:
+        df = df.drop(columns=cols_to_remove)
+        for col in cols_to_remove:
+            cleaned_to_original.pop(col, None)
+        print(f"[INFO] Removed {len(cols_to_remove)} columns based on EDA analysis: {cols_to_remove}")
 
     final_columns = df.columns.tolist()
     final_originals = [cleaned_to_original.get(col, col) for col in final_columns]

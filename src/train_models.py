@@ -1,4 +1,4 @@
-"""Baseline model training pipeline for the Health XAI project."""
+"""Baseline model training pipeline for the Health XAI prediction."""
 
 from __future__ import annotations
 
@@ -26,18 +26,33 @@ DATA_PATH = PROJECT_ROOT / "data" / "processed" / "health_clean.csv"
 MODEL_DIR = PROJECT_ROOT / "results" / "models"
 SCALER_PATH = MODEL_DIR / "standard_scaler.joblib"
 DATA_SPLITS_PATH = MODEL_DIR / "data_splits.joblib"
-NN_MODEL_PATH = MODEL_DIR / "neural_network.pt"
+NN_MODEL_PATH = MODEL_DIR / "neural_network.pkl"
 NN_CONFIG_PATH = MODEL_DIR / "neural_network_config.json"
-TARGET_COLUMN = "hltprhc"
+TARGET_COLUMN = "health"
 RANDOM_STATE = 42
 
 
-class FeedForwardNN(nn.Module):
-    """Simple feed-forward neural network for binary classification."""
+class XGBClassifierWrapper:
+    """Wrapper for XGBoost to handle 1-5 health scale prediction."""
+    
+    def __init__(self, xgb_model):
+        self.xgb_model = xgb_model
+    
+    def predict(self, X):
+        # XGBoost predicts 0-4, convert back to 1-5
+        return self.xgb_model.predict(X) + 1
+    
+    def predict_proba(self, X):
+        return self.xgb_model.predict_proba(X)
 
-    def __init__(self, input_dim: int, hidden_dims: Tuple[int, int] = (64, 32)):
+
+class FeedForwardNN(nn.Module):
+    """Simple feed-forward neural network for 5-class health prediction."""
+
+    def __init__(self, input_dim: int, hidden_dims: Tuple[int, int] = (64, 32), num_classes: int = 5):
         super().__init__()
         self.hidden_dims = hidden_dims
+        self.num_classes = num_classes
         layers = [
             nn.Linear(input_dim, hidden_dims[0]),
             nn.ReLU(),
@@ -45,12 +60,12 @@ class FeedForwardNN(nn.Module):
             nn.Linear(hidden_dims[0], hidden_dims[1]),
             nn.ReLU(),
             nn.Dropout(p=0.2),
-            nn.Linear(hidden_dims[1], 1),
+            nn.Linear(hidden_dims[1], num_classes),
         ]
         self.model = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.model(x).squeeze(-1)
+        return self.model(x)
 
 
 def load_dataset(path: Path = DATA_PATH) -> pd.DataFrame:
@@ -97,29 +112,33 @@ def train_neural_network(
     input_dim: int,
     random_state: int = RANDOM_STATE,
 ) -> FeedForwardNN:
-    """Train a simple feed-forward neural network."""
+    """Train a neural network for 5-class health prediction with AdamW optimizer and patience=10."""
     torch.manual_seed(random_state)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = FeedForwardNN(input_dim=input_dim).to(device)
-    criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    model = FeedForwardNN(input_dim=input_dim, num_classes=5).to(device)
+    criterion = nn.CrossEntropyLoss()  # For multiclass classification
+    optimizer = optim.AdamW(model.parameters(), lr=1e-3)  # Using AdamW as specified
     batch_size = 128
-    max_epochs = 50
-    patience = 5
+    max_epochs = 100
+    patience = 10  # As specified in project requirements
     best_state = None
     best_val_loss = float("inf")
     patience_counter = 0
 
+    # Convert target to 0-based indexing (health values 1-5 -> 0-4)
+    y_train_indexed = y_train - 1
+    y_val_indexed = y_val - 1
+
     X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
-    y_train_tensor = torch.tensor(y_train, dtype=torch.float32)
+    y_train_tensor = torch.tensor(y_train_indexed, dtype=torch.long)
     train_dataset = torch.utils.data.TensorDataset(X_train_tensor, y_train_tensor)
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=batch_size, shuffle=True
     )
 
     X_val_tensor = torch.tensor(X_val, dtype=torch.float32, device=device)
-    y_val_tensor = torch.tensor(y_val, dtype=torch.float32, device=device)
+    y_val_tensor = torch.tensor(y_val_indexed, dtype=torch.long, device=device)
 
     for epoch in range(1, max_epochs + 1):
         model.train()
@@ -153,7 +172,7 @@ def train_neural_network(
         else:
             patience_counter += 1
             if patience_counter >= patience:
-                print("[NN] Early stopping triggered.")
+                print(f"[NN] Early stopping triggered after {patience} epochs without improvement.")
                 break
 
     if best_state is not None:
@@ -186,7 +205,7 @@ def train_all_models() -> Dict[str, Path]:
     model_paths: Dict[str, Path] = {}
     model_paths["standard_scaler"] = SCALER_PATH
 
-    # Logistic Regression
+    # Logistic Regression - multiclass support
     log_reg = LogisticRegression(
         max_iter=1000,
         class_weight="balanced",
@@ -223,26 +242,32 @@ def train_all_models() -> Dict[str, Path]:
     model_paths["random_forest"] = save_model(rf, MODEL_DIR / "random_forest.joblib")
     print(f"✅ Trained Random Forest on {X_train.shape[0]} samples.")
 
-    # XGBoost
+    # XGBoost - multiclass support  
     xgb = XGBClassifier(
         n_estimators=500,
         learning_rate=0.05,
         max_depth=4,
         subsample=0.8,
         colsample_bytree=0.8,
-        eval_metric="logloss",
+        objective="multi:softprob",  # For multiclass classification
+        eval_metric="mlogloss",  # Multiclass log loss
         random_state=RANDOM_STATE,
         n_jobs=-1,
         reg_lambda=1.0,
         use_label_encoder=False,
     )
+    # Convert to 0-indexed for XGBoost
+    y_train_xgb = y_train - 1
+    y_val_xgb = y_val - 1
     xgb.fit(
         X_train,
-        y_train,
-        eval_set=[(X_val, y_val)],
+        y_train_xgb,
+        eval_set=[(X_val, y_val_xgb)],
         verbose=False,
     )
-    model_paths["xgboost"] = save_model(xgb, MODEL_DIR / "xgboost_classifier.joblib")
+    # Wrap XGBoost to handle 1-5 prediction scale
+    xgb_wrapper = XGBClassifierWrapper(xgb)
+    model_paths["xgboost"] = save_model(xgb_wrapper, MODEL_DIR / "xgboost.joblib")
     print(f"✅ Trained XGBoost on {X_train.shape[0]} samples.")
 
     # Neural Network
@@ -255,8 +280,12 @@ def train_all_models() -> Dict[str, Path]:
     )
     model_paths["neural_network"] = save_model(nn_model, NN_MODEL_PATH)
     with NN_CONFIG_PATH.open("w", encoding="utf-8") as handle:
-        json.dump({"input_dim": X_train.shape[1], "hidden_dims": list(nn_model.hidden_dims)}, handle, indent=2)
-    print(f"✅ Trained Neural Network on {X_train.shape[0]} samples.")
+        json.dump({
+            "input_dim": X_train.shape[1], 
+            "hidden_dims": list(nn_model.hidden_dims),
+            "num_classes": nn_model.num_classes
+        }, handle, indent=2)
+    print(f"✅ Trained Neural Network (5-class) on {X_train.shape[0]} samples.")
 
     # Persist data splits for evaluation
     splits = {

@@ -1,218 +1,117 @@
-# Research Project Plan & Roadmap
+# Updated Research Project Plan
 
 **Title:** Prediction and Local Explainable AI (XAI) in Healthcare  
 **Duration:** October 2025 – January 2026  
 **Supervisor:** Prof. Dr. Beate Rhein  
-**Industry Partner:** Nightingale Heart — Mr. Håkan Lane
+**Industry Partner:** Nightingale Heart – Mr. Håkan Lane  
 
----
+## Project Goal
 
-## Project Overview
+The goal is to integrate **Local Explainable AI (XAI)** techniques — specifically **LIME** and **SHAP** — to interpret model decisions at the individual level.
 
-The project targets predictive modeling of heart-related risks using ~40,000 survey responses from a European health and lifestyle study. Logistic Regression, Random Forest, XGBoost, and a PyTorch-based neural network establish the modelling baseline; the best-performing tuned model will ultimately power the user-facing experience. Local explainability will be delivered through LIME and SHAP, with results surfaced via a Gradio web interface. Docker will containerize the full workflow for reproducibility and deployment.
+A **Gradio interface** will provide real-time interactive predictions and explanations.  
+The entire workflow will be **containerized using Docker** for reproducibility and future deployment.
 
-### Dataset Highlights
+## Dataset Overview
 
-- Structured CSV with demographic, lifestyle, and wellness variables.
-- **Primary target:** `hltprhc` (heart condition: 1 = yes, 0 = no)
-- **Secondary targets:** `hltprhb` (blood pressure), `hltprdi` (diabetes)
+Structured CSV dataset with health, demographic, and lifestyle variables.
 
----
+• **Target variable:** `health` (5-class ordinal health rating: 1=Very Good, 2=Good, 3=Fair, 4=Bad, 5=Very Bad)  
+• **Alternative targets:** `hltprhc` (heart condition), `hltprhb` (blood pressure), `hltprdi` (diabetes)
 
 ## Research Objectives
 
-1. Build and compare baseline predictive models (Logistic Regression, Random Forest, XGBoost, PyTorch NN).
-2. Perform early error analysis (accuracy, precision, recall, confusion matrices, misclassified samples).
-3. Tune models and validate performance on unseen data.
-4. Apply LIME and SHAP for individual-level explanations.
-5. Conduct literature review informed by error analysis and model behaviour.
-6. Draft Methods, Results, and Discussion sections in parallel with experiments.
-7. Develop a Gradio demo for interactive, interpretable predictions.
-8. Containerize the full pipeline using Docker.
+1. **Develop and compare predictive models:** Logistic Regression, Random Forest, XGBoost, SVM, and PyTorch Neural Network for 5-class health prediction.
+2. **Perform early error analysis** (accuracy, precision, recall, F1-macro/weighted, confusion matrix, and misclassified samples for 5-class classification).
+3. **Conduct model optimization and iterative validation** on unseen data after tuning.
+4. **Apply Local Explainability** (LIME and SHAP) for individual-level interpretation.
+5. **Conduct a literature review** ("State of the Art") informed by model errors.
+6. **Write report sections** (Methods, Results, Discussion) in parallel with experiments.
+7. **Build a Gradio demo** for interpretable healthcare prediction.
+8. **Containerize all experiments** using Docker for reproducibility.
 
----
+## 🧩 3-Month Research Project Roadmap
 
-## 3-Month Roadmap (Biweekly Sprints, ~20 hrs/week)
+*(Biweekly meetings – 6 total, ~20 hrs/week)*
 
 ### Weeks 1–2 (Oct 20 – Nov 2): Data Understanding, Baseline Modeling & Error Analysis
 
-- Load and explore dataset (~40k records); perform EDA (distributions, missing values, correlations, target balance). Convert height/weight to BMI and drop the `cntry` categorical feature so the processed dataset is fully numeric before persisting `data/processed/health_clean.csv`.
-- Preprocess: normalization, encoding, imputation, BMI derivation.
-- Train baseline models (Logistic Regression, Random Forest, XGBoost, SVM) plus a simple PyTorch NN.
-- Evaluate with accuracy, precision, recall, F1, ROC-AUC; generate confusion matrices and misclassification plots.
-- Initialize GitHub repository, requirements.txt, Dockerfile; draft Introduction & Methods sections.
-- **Deliverables:** Clean dataset, baseline metrics, error plots, initial Docker setup.
-- **Reading:** *Interpretable ML* Ch. 2–3 · *Hands-On ML* Ch. 2–4 · *Designing ML Systems* Ch. 2
+• Load and explore the dataset.  
+• Conduct Full EDA.  
+• Data preprocessing and feature engineering.  
+• Train baseline models using Logistic Regression, Random Forest, XGBoost, SVM, and Neural Network with PyTorch (using AdamW with patience set to 10).  
+• Evaluate with accuracy, precision, recall, F1, ROC curve, classification report, and confusion matrix  
+• Perform misclassified samples  
+• Perform full error analysis  
+• Initialize the GitHub repository, create a requirements.txt file, and create a Dockerfile.  
+• Begin writing the Introduction and Methods sections.
 
-### Weeks 3–4 (Nov 3 – Nov 16): Model Optimization, Early Validation & Literature Review ✅ **COMPLETED**
+**Deliverables:** Clean dataset + baseline results + error plots + Docker setup  
+**Reading:** Interpretable ML Ch. 2–3 · Hands-On ML Ch. 2–4 · Designing ML Systems Ch. 2
 
-**✅ CORE MODELING ACHIEVEMENTS:**
-- ✅ **Baseline models trained:** Logistic Regression, Random Forest, XGBoost, SVM, Neural Network
-- ✅ **Performance evaluation:** Complete metrics with F1 optimization approach
-- ✅ **Data infrastructure:** Clean splits (29,663 train, 6,357 validation, 6,357 test)
-- ✅ **Conservative tuning:** Anti-overfitting Random Forest and XGBoost models created
-- ✅ **Advanced neural network:** Custom PyTorch HealthNN with AdamW optimizer
-- ✅ **Project structure:** Unified notebook and script implementations synchronized
-- ✅ **Comprehensive evaluation:** Confusion matrices, ROC curves, misclassified samples analysis
+### Weeks 3–4 (Nov 3 – Nov 16): Model Optimization, Early Validation & Literature Review
 
-**✅ ADVANCED HYPERPARAMETER OPTIMIZATION:**
-- ✅ **Professional tuning module:** `src/tuning/randomized_search.py` with academic-standard implementation
-- ✅ **5-fold stratified CV:** All sklearn models with robust parameter selection
-- ✅ **Neural network excellence:** Custom trials with AdamW + early stopping (patience=10)
-- ✅ **Anti-overfitting framework:** <5% train-validation gap monitoring and conservative parameter ranges
-- ✅ **Class imbalance handling:** Balanced weights, regularization (no synthetic oversampling)
-- ✅ **Professional logging:** Comprehensive diagnostics, checkpoints, and visualization pipeline
+• Tune hyperparameters (RandomizedSearchCV).  
+• Validate optimized models on unseen data (early performance check).  
+• Analyze misclassifications and document patterns.  
+• Begin literature review ("State of the Art") informed by error findings.  
+• Update Docker setup for reproducible experiments.  
+• Continue writing the Methods section.
 
-**✅ COMPREHENSIVE ERROR ANALYSIS FRAMEWORK:**
-- ✅ **11-section diagnostic pipeline:** Complete ML error analysis in `notebooks/04_error_analysis.ipynb`
-- ✅ **Clinical risk assessment:** MODERATE over-prediction tendency identified (87.8% false positives)
-- ✅ **Model calibration evaluation:** Poor probability reliability detected (ECE: 0.304)
-- ✅ **Feature impact analysis:** Health status dominates predictions (effect size: 1.99)
-- ✅ **Cross-model validation:** 94-97% agreement between tuned models
-- ✅ **Error clustering:** Two distinct behavioral patterns identified in misclassification
+**Deliverables:** Optimized models + validation results + error summary + initial paper notes  
+**Reading:** Interpretable ML Ch. 5 · Hands-On ML Ch. 6–8 · Designing ML Systems Ch. 3
 
-**✅ PERFORMANCE RESULTS & MODEL SELECTION:**
-- ✅ **Random Forest Tuned:** Best test F1 (0.3832), balanced performance leader
-- ✅ **Neural Network Tuned:** Best validation F1 (0.3792), recall optimization (0.6843)
-- ✅ **XGBoost Tuned:** Highest ROC-AUC (0.7968), explainability candidate
-- ✅ **All models generalize well:** <5% train-validation gaps achieved
-- ✅ **Clinical insights generated:** Threshold optimization, confidence reporting, monitoring protocols
+### Weeks 5–6 (Nov 17 – Dec 1): Local Explainability Integration (XAI)
 
-**✅ DOCUMENTATION & INFRASTRUCTURE:**
-- ✅ **Literature review foundation:** State-of-the-art framework with Week 3-4 insights
-- ✅ **Docker environment optimized:** PyTorch CPU, Gradio port (7860), production dependencies
-- ✅ **Professional reports updated:** All biweekly meetings, final report draft, README comprehensive
-- ✅ **CLI pipeline ready:** `python -m src.tuning.randomized_search` for production execution
+• Implement LIME and SHAP for selected model.  
+• Generate SHAP summary, force plots, and LIME explanations.  
+• Compare local explanations across models.  
+• Interpret healthcare-related insights from local explanations.  
+• Ensure XAI modules run inside Docker.  
+• Continue writing State of the Art and Results sections.
 
-**🎯 WEEK 3-4 SUMMARY:** **100% COMPLETED WITH EXCELLENCE**  
-All deliverables achieved ahead of schedule with professional-grade implementation exceeding academic requirements.
+**Deliverables:** XAI visualizations + interpretability report + Dockerized XAI workflow  
+**Reading:** Interpretable ML Ch. 4–6 · Hands-On ML Ch. 11 · Designing ML Systems Ch. 8
 
-**Deliverables:** ✅ Tuned models, ✅ validation metrics (F1-score), ✅ comprehensive diagnostics, ✅ literature foundation, ✅ Docker environment.
-**Reading:** *Interpretable ML* Ch. 5 · *Hands-On ML* Ch. 6–8 · *Designing ML Systems* Ch. 3
+### Weeks 7–8 (Dec 2 – Dec 15): Gradio Demo Development & Report Progress
 
-### Weeks 5–6 (Nov 17 – Dec 1): Local Explainability Integration (XAI) ✅ **COMPLETED**
+• Build an interactive Gradio app (real-time predictions + explanations).  
+• Integrate classical and NN models for comparison.  
+• Test usability, latency, and visual clarity.  
+• Containerize demo (EXPOSE 7860) and test locally.  
+• Continue report writing (Results + Discussion).
 
-**✅ COMPREHENSIVE XAI IMPLEMENTATION ACHIEVED:**
-- ✅ **Professional SHAP + LIME integration:** Full TreeExplainer and TabularExplainer implementation for Random Forest Tuned
-- ✅ **High-quality visualization suite:** SHAP summary plots, feature importance bars, waterfall plots for high/medium/low risk patients
-- ✅ **Explanation consistency validation:** Strong LIME-SHAP agreement (0.702 correlation, 66.7% feature overlap across risk categories)
-- ✅ **Clinical interpretability framework:** 15 risk factors mapped to healthcare domains with decision support templates
-- ✅ **Production-ready XAI pipeline:** Automated generation of 15 professional artifacts (6 SHAP PNGs, 3 LIME HTMLs, clinical templates)
+**Deliverables:** Functional Gradio demo (classical + NN models) + Meeting 4 summary  
+**Reading:** Hands-On ML Ch. 19 · Designing ML Systems Ch. 4
 
-**✅ HEALTHCARE DECISION SUPPORT ACHIEVED:**
-- ✅ **Clinical risk stratification:** Three-tier system (high/medium/low) with specific intervention recommendations
-- ✅ **Feature impact analysis:** Health status dominance (0.142 mean |SHAP|) followed by sleep, activity, emotional wellbeing
-- ✅ **Individual patient explanations:** Validated waterfall plots demonstrating clear feature contributions for clinical interpretation
-- ✅ **Healthcare professional templates:** Automated clinical decision support with actionable intervention guidelines
-- ✅ **XAI quality assessment:** Achieved "Good" rating (0.693 score) suitable for clinical deployment
+### Weeks 9–10 (Dec 16 – Jan 1): Evaluation, Refinement & Discussion
 
-**✅ TECHNICAL INFRASTRUCTURE DELIVERED:**
-- ✅ **Professional XAI module:** Complete `src/explainability.py` CLI with healthcare-focused interpretation
-- ✅ **Comprehensive notebook implementation:** `notebooks/05_explainability_tests.ipynb` with end-to-end XAI analysis
-- ✅ **Explanation consistency validation:** Rigorous LIME-SHAP agreement analysis across all risk categories
-- ✅ **Clinical integration ready:** All XAI components tested and validated for Week 7-8 Gradio integration
-- ✅ **Professional documentation:** Clinical interpretation guidelines and healthcare decision support framework
+• Evaluate final model on validation and test sets.  
+• Assess stability and consistency of local explanations.  
+• Refine XAI visuals and final discussion.  
+• Update Docker image with final model.  
+• Finalize Discussion and State of the Art sections.
 
-**✅ RESEARCH & CLINICAL VALIDATION:**
-- ✅ **Literature integration completed:** XAI healthcare applications documented in comprehensive literature review
-- ✅ **Clinical interpretability validated:** Strong explanation agreement ensures reliable healthcare professional interpretation
-- ✅ **Methodological excellence:** Reproducible XAI pipeline with automated quality assessment and consistency validation
-- ✅ **Production artifacts generated:** 15 professional files ready for clinical stakeholder demonstration
+**Deliverables:** Evaluation results + refined XAI visuals + updated demo + Meeting 5 summary  
+**Reading:** Interpretable ML Ch. 7 · Designing ML Systems Ch. 9
 
-**🎯 WEEK 5-6 SUMMARY:** **100% COMPLETED WITH CLINICAL EXCELLENCE**  
-All XAI deliverables achieved with strong validation metrics, ready for Week 7-8 Gradio integration and clinical demonstration.
+### Weeks 11–12 (Jan 2 – Jan 15): Final Report & Defense Preparation
 
-**Deliverables:** ✅ Professional LIME/SHAP pipeline, ✅ healthcare interpretability analysis, ✅ clinical explanation templates, ✅ validated XAI workflows.
-**Reading:** ✅ *Interpretable ML* Ch. 4–6 · ✅ *Hands-On ML* Ch. 11 · ✅ *Designing ML Systems* Ch. 8
+• Finalize Gradio demo and Docker image.  
+• Write final report (Introduction, State of the Art, Methods, Results, Discussion, Conclusion).  
+• Prepare presentation slides and defense.  
+• Submit report + Docker package to Professor and Nightingale Heart.
 
-### Weeks 7–8 (Dec 2 – Dec 15): Clinical Decision Support & Gradio Demo Development
+**Deliverables:** Final report + Gradio demo + Docker image + Meeting 6 summary  
+**Reading:** Hands-On ML Appendix · Designing ML Systems Ch. 10
 
-**🔥 IMMEDIATE ACTIONS IMPLEMENTATION (1-2 weeks):**
-- **🎯 Threshold Optimization:** Implement clinical cost-benefit analysis to optimize decision threshold using XAI insights from Week 5-6
-- **🎯 Prediction Confidence Reporting:** Add confidence scores and uncertainty estimates to model outputs with real-time display
-- **📈 Clinical Impact Analysis:** Reduce false negatives while maintaining acceptable false positive rate through threshold calibration
-- **⚠️ Low-Confidence Detection:** Enable clinicians to identify predictions requiring manual review through confidence scoring
-- **🏥 Risk Stratification Engine:** Build clinical recommendation system with low/medium/high risk categories based on model outputs
+## 📅 Summary of Biweekly Meetings
 
-**🖥️ GRADIO DEMO DEVELOPMENT:**
-- Build interactive Gradio app with Random Forest Tuned + comprehensive XAI explanations
-- Integrate real-time predictions with LIME/SHAP visualizations and clinical recommendations
-- Implement user-friendly interface for healthcare practitioners with confidence indicators
-- Add batch prediction capabilities for clinical workflow integration
-- Test usability, latency, and explanation clarity with healthcare-focused UI/UX
-
-**🔧 PRODUCTION INTEGRATION:**
-- Containerize complete demo with optimized Docker image (EXPOSE 7860)
-- Implement API endpoints for clinical system integration potential
-- Add logging and monitoring capabilities for production readiness
-- Create deployment documentation and clinical user guides
-
-**📚 RESEARCH CONTINUATION:**
-- Continue Results & Discussion writing with XAI and clinical decision support insights
-- Document clinical validation methodology and usability testing results
-
-**Deliverables:** Clinical decision support framework, interactive Gradio demo with XAI integration, production-ready Docker deployment, Meeting 4 summary.
-**Reading:** *Hands-On ML* Ch. 19 · *Designing ML Systems* Ch. 4
-
-### Weeks 9–10 (Dec 16 – Jan 1): Advanced Validation & Model Refinement
-
-**📅 SHORT-TERM ACTIONS IMPLEMENTATION (1-2 months):**
-- **🎯 Model Calibration Enhancement:** Implement Platt scaling or isotonic regression for improved probability reliability in clinical decision support
-- **🎯 Subgroup-Specific Validation:** Develop age and risk-stratified performance monitoring to ensure equitable performance across patient demographics  
-- **📊 Fairness Assessment:** Comprehensive demographic bias analysis and mitigation strategies for clinical deployment
-- **🔍 Advanced Error Analysis:** Deep-dive into prediction failures across different patient subgroups and clinical scenarios
-
-**🔬 COMPREHENSIVE MODEL EVALUATION:**
-- Final evaluation on validation/test sets with enhanced calibration and fairness metrics
-- Stability assessment of local explanations across demographic groups and risk categories
-- Cross-validation of clinical decision support effectiveness and threshold optimization results
-- Benchmarking against clinical guidelines and healthcare industry standards
-
-**📚 RESEARCH FINALIZATION:**  
-- Refine XAI visualizations with clinical validation insights and demographic analysis
-- Finalize Discussion and State of the Art sections with advanced validation results
-- Update Docker image with calibrated model and enhanced clinical decision support features
-- Create comprehensive clinical validation report and deployment readiness assessment
-
-**Deliverables:** Calibrated model with fairness validation, enhanced XAI with demographic analysis, clinical validation report, Meeting 5 summary.
-**Reading:** *Interpretable ML* Ch. 7 · *Designing ML Systems* Ch. 9
-
-### Weeks 11–12 (Jan 2 – Jan 15): Clinical Deployment & Final Integration
-
-**🏥 CLINICAL VALIDATION & DEPLOYMENT PREPARATION:**
-- **Clinical Stakeholder Review:** Validate clinical decision support features with healthcare professionals and domain experts
-- **Production Readiness Assessment:** Comprehensive testing of calibrated model, threshold optimization, and confidence reporting in simulated clinical environments  
-- **Regulatory Compliance:** Ensure adherence to healthcare data standards and clinical decision support guidelines
-- **Integration Testing:** End-to-end validation of XAI pipeline with calibrated predictions and demographic fairness assessment
-
-**📋 COMPREHENSIVE DOCUMENTATION:**
-- **Clinical User Manual:** Step-by-step guides for healthcare professionals using the decision support system
-- **Technical Documentation:** Complete API documentation, deployment guides, and maintenance protocols
-- **Validation Report:** Comprehensive clinical validation results, fairness analysis, and deployment recommendations
-- **Risk Assessment:** Clinical risk management documentation and model limitation disclosure
-
-**🎯 FINAL PROJECT DELIVERY:**
-- Complete full academic report with clinical validation insights (Introduction, State of the Art, Methods, Results, Discussion, Conclusion)
-- Finalize production-ready Gradio demo with calibrated predictions, confidence reporting, and clinical interface
-- Prepare comprehensive Docker image with clinical decision support features and monitoring capabilities
-- Create presentation materials highlighting clinical validation and deployment readiness for supervisor and Nightingale Heart
-
-**Deliverables:** Clinical-validated final report (PDF + repo), production-ready Gradio demo with clinical interface, clinical deployment Docker image, Meeting 6 summary.
-**Reading:** *Hands-On ML* Appendix · *Designing ML Systems* Ch. 10
-
----
-
-## Biweekly Meeting Overview
-
-| Meeting | Week | Focus | Key Deliverable | Status |
-|---------|------|-------|-----------------|--------|
-| 1 | 2 | EDA + Baseline + Error Analysis | Clean dataset, baseline metrics, confusion matrix | ✅ **COMPLETED** |
-| 2 | 4 | Model Optimisation + Early Validation | Tuned models, validation results, literature insights | ✅ **COMPLETED** |
-| 3 | 6 | Local XAI Integration | LIME/SHAP visualisations + interpretation notes | ✅ **COMPLETED** |
-| 4 | 8 | Gradio Demo | Interactive (Dockerised) demo | 🔄 **NEXT PHASE** |
-| 5 | 10 | Evaluation + Refinement | Final metrics, discussion draft | 📋 **PLANNED** |
-| 6 | 12 | Final Presentation | Report, Gradio demo, Docker image | 📋 **PLANNED** |
-
----
-
-Keep this document as the single reference point for project scope, timelines, and deliverables. Update it in later weeks if milestones shift or new goals emerge.***
+| Meeting | Week | Focus | Key Deliverable |
+|---------|------|-------|----------------|
+| 1 | 2 | EDA + Baseline + Error Analysis | Clean dataset + metrics + confusion matrix |
+| 2 | 4 | Model Optimization + Early Validation | Optimized models + validation results + literature insights |
+| 3 | 6 | Local XAI Integration | LIME/SHAP visualizations + interpretation |
+| 4 | 8 | Gradio Demo | Interactive demo (Dockerized) |
+| 5 | 10 | Evaluation + Refinement | Final metrics + discussion draft |
+| 6 | 12 | Final Presentation | Report + Gradio demo + Docker image |
