@@ -2,31 +2,36 @@
 
 **Predictive Modeling and Local Explainable AI (XAI) in Healthcare**
 
-This repository hosts a comprehensive MSc research project focused on predicting 5-class health status from European survey data using machine learning with planned explainable AI integration. The project follows a systematic biweekly development approach. This README summarizes accomplishments through **Week 1-2**, covering complete baseline implementation and comprehensive error analysis.
+This repository hosts a comprehensive MSc research project focused on predicting 5-class health status from European survey data using machine learning with explainable AI integration. The project follows a systematic biweekly development approach with complete **Week 1-4 implementation** covering baseline models, comprehensive error analysis, and advanced class imbalance solutions.
 
 ---
 
-## Week 1-2 Achievements Summary
+## Week 1-4 Achievements Summary
 
-### ✅ Complete Baseline Implementation  
+### ✅ Phase 1-2: Complete Baseline Implementation (Week 1-2)
 - **Robust data preprocessing pipeline:** 11,322 European Health Survey records with 22 numerical features
 - **Multi-algorithm baseline models:** XGBoost (49.3% accuracy), Random Forest (47.6%), SVM (42.3%), Logistic Regression (36.8%)
 - **Comprehensive evaluation framework:** Complete metrics calculation with calibration analysis
 - **Production-ready artifacts:** Serialized models, scalers, and data splits for reproducible experiments
 
-### ✅ Comprehensive Error Analysis Complete
-- **Detailed misclassification study:** 3,218 misclassified samples analyzed across all models
-- **Class imbalance assessment:** Severe 1:39.2 ratio identified requiring specialized handling
-- **Model calibration validation:** Excellent Expected Calibration Error (0.009) achieved
-- **Edge case identification:** 87.4% of samples flagged as requiring robust model handling
+### ✅ Phase 3: Advanced Class Imbalance Solutions (Week 3-4)
+- **Enhanced model architecture:** XGBoost with 500 trees, depth=8; Random Forest with 300 trees, depth=20
+- **Cost-sensitive learning:** Balanced class weights with 23.3x emphasis on Very Bad health class
+- **Individual vs ensemble analysis:** Enhanced XGBoost outperformed both hard and soft voting ensembles
+- **Final model selection:** Optimized Enhanced XGBoost (Test F1-Macro: 0.3620, Accuracy: 45.54%)
 
-### 📊 Week 1-2 Technical Results
-| **Component** | **Status** | **Key Metrics** | **Artifacts Generated** |
-|---------------|------------|-----------------|------------------------|
-| **Data Pipeline** | ✅ Complete | 11,322 records, 22 features | Clean datasets, splits, feature mapping |
-| **Baseline Models** | ✅ Complete | XGBoost: 49.3% accuracy (best) | 4 trained models with evaluation reports |
-| **Error Analysis** | ✅ Complete | ECE: 0.009 (excellent calibration) | 10-section comprehensive analysis |
-| **Feature Analysis** | ✅ Complete | Self-rated health dominates | Feature importance rankings and correlations |
+### 📊 Week 1-4 Complete Technical Results
+| **Phase** | **Focus** | **Key Achievement** | **Final Model Performance** |
+|-----------|-----------|---------------------|----------------------------|
+| **Phase 1-2** | Baseline Implementation | XGBoost baseline established | 49.3% accuracy, 0.3641 F1-Macro |
+| **Phase 3** | Class Imbalance Solutions | Enhanced models with cost-sensitive learning | 45.54% accuracy, 0.3620 F1-Macro (test) |
+| **Status** | **Week 3-4 Complete** | **Ready for Week 5-6 XAI** | Enhanced XGBoost saved for LIME & SHAP |
+
+### 🎯 Phase 3 Key Findings
+- **Individual models outperform ensembles:** Enhanced XGBoost > Hard voting > Soft voting
+- **Cost-sensitive learning effective:** 23.3x class weighting improved minority class detection
+- **Dataset limitations identified:** Modest improvements despite major enhancements suggest missing clinical features
+- **Performance appropriate:** 45.54% accuracy reasonable for healthcare 5-class prediction with 1:39.2 imbalance
 
 ---
 
@@ -70,14 +75,19 @@ health_xai_prediction/
 ├── notebooks/
 │   ├── 01_exploratory_analysis.ipynb  # ✅ Complete EDA and data quality analysis
 │   ├── 02_data_processing.ipynb       # ✅ Preprocessing pipeline implementation
-│   ├── 03_modeling.ipynb              # ✅ Baseline model training and evaluation
-│   └── 04_error_analysis.ipynb        # ✅ Comprehensive 10-section error analysis
+│   ├── 03_modeling.ipynb              # ✅ Complete: Baseline models + Phase 3 enhanced models
+│   └── 04_error_analysis.ipynb        # ✅ Comprehensive error analysis framework
 ├── reports/
-│   ├── biweekly_meeting_1.md           # ✅ Week 1-2 progress documentation
+│   ├── biweekly_meeting_2.md           # ✅ Week 3-4 Phase 3 implementation summary
 │   ├── project_plan_and_roadmap.md     # Project overview and planning
-│   ├── literature_review.md            # ✅ Foundational literature supporting Week 1-2
-│   └── final_report_draft.md           # ✅ Complete Week 1-2 implementation report
+│   ├── literature_review.md            # ✅ Updated with Phase 3 findings and ensemble analysis
+│   └── final_report_draft.md           # ✅ Complete Week 1-4 implementation documentation
 ├── results/
+│   ├── models/                         # ✅ Final enhanced XGBoost model ready for XAI
+│   │   ├── final_phase3_model.joblib   # Final model for Week 5-6 XAI implementation
+│   │   └── phase3_class_imbalance_results.joblib  # Complete Phase 3 results
+│   ├── .keep                           # Git directory preservation
+│   └── metrics/                        # Comprehensive evaluation results
 │   ├── metrics/                 # Model evaluation results and performance summaries
 │   ├── models/                  # Serialized baseline models and preprocessing artifacts
 │   └── plots/                   # Visualization outputs from analysis notebooks
