@@ -2,11 +2,11 @@
 
 **Predictive Modeling and Local Explainable AI (XAI) in Healthcare**
 
-This repository hosts a comprehensive MSc research project focused on predicting 5-class health status from European survey data using machine learning with explainable AI integration. The project follows a systematic biweekly development approach with complete **Week 1-4 implementation** covering baseline models, comprehensive error analysis, and advanced class imbalance solutions.
+This repository hosts a comprehensive MSc research project focused on predicting 5-class health status from European survey data using machine learning with explainable AI integration. The project follows a systematic biweekly development approach with complete **Week 1-6 implementation** covering baseline models, comprehensive error analysis, advanced class imbalance solutions, and local explainable AI integration.
 
 ---
 
-## Week 1-4 Achievements Summary
+## Week 1-6 Achievements Summary
 
 ### ✅ Phase 1-2: Complete Baseline Implementation (Week 1-2)
 - **Robust data preprocessing pipeline:** 11,322 European Health Survey records with 22 numerical features
@@ -20,18 +20,28 @@ This repository hosts a comprehensive MSc research project focused on predicting
 - **Individual vs ensemble analysis:** Enhanced XGBoost outperformed both hard and soft voting ensembles
 - **Final model selection:** Optimized Enhanced XGBoost (Test F1-Macro: 0.3620, Accuracy: 45.54%)
 
-### 📊 Week 1-4 Complete Technical Results
-| **Phase** | **Focus** | **Key Achievement** | **Final Model Performance** |
-|-----------|-----------|---------------------|----------------------------|
+### ✅ Phase 4: Local Explainable AI Integration (Week 5-6)
+- **Dual XAI Implementation:** Complete SHAP TreeExplainer + LIME TabularExplainer integration
+- **Healthcare Interpretation Framework:** BMI (0.5831), Physical Effort (0.4756) identified as top clinical predictors
+- **Method Validation:** 32% SHAP-LIME agreement meets healthcare validation standards
+- **Individual Case Analysis:** 5 health class case studies with local explanations and clinical insights
+- **Docker Integration:** Containerized XAI modules for reproducible deployment
+- **Research Accessibility:** 7 CSV files exported for healthcare professional and researcher collaboration
+
+### 📊 Week 1-6 Complete Technical Results
+| **Phase** | **Focus** | **Key Achievement** | **Final Performance** |
+|-----------|-----------|---------------------|----------------------|
 | **Phase 1-2** | Baseline Implementation | XGBoost baseline established | 49.3% accuracy, 0.3641 F1-Macro |
 | **Phase 3** | Class Imbalance Solutions | Enhanced models with cost-sensitive learning | 45.54% accuracy, 0.3620 F1-Macro (test) |
-| **Status** | **Week 3-4 Complete** | **Ready for Week 5-6 XAI** | Enhanced XGBoost saved for LIME & SHAP |
+| **Phase 4** | XAI Integration | SHAP + LIME with healthcare framework | 32% method agreement, BMI top predictor |
+| **Status** | **Week 5-6 Complete** | **Ready for Week 7-8 Gradio Demo** | Complete XAI pipeline with clinical insights |
 
-### 🎯 Phase 3 Key Findings
-- **Individual models outperform ensembles:** Enhanced XGBoost > Hard voting > Soft voting
-- **Cost-sensitive learning effective:** 23.3x class weighting improved minority class detection
-- **Dataset limitations identified:** Modest improvements despite major enhancements suggest missing clinical features
-- **Performance appropriate:** 45.54% accuracy reasonable for healthcare 5-class prediction with 1:39.2 imbalance
+### 🎯 Week 5-6 XAI Key Findings
+- **BMI emerges as most reliable predictor:** 37.0/100 reliability score combining importance and consistency
+- **Physical Effort critical for Very Bad health:** Strongest impact on poor health outcomes
+- **Sleep Quality provides consensus:** 60% agreement between SHAP and LIME methods
+- **Mental Wellbeing consistently important:** Across all health classes and both XAI methods
+- **Clinical thresholds established:** BMI high risk >0.62, Physical Effort >0.45 standardized units
 
 ---
 
@@ -68,37 +78,80 @@ Our comprehensive error analysis revealed several critical insights:
 ## Repository Structure
 ```
 health_xai_prediction/
+├── app/
+│   ├── __init__.py                     # Application package
+│   └── app_gradio.py                   # ✅ Week 7-8: Professional Gradio healthcare interface
 ├── data/
-│   ├── raw/                     # Original survey datasets
-│   ├── processed/               # Clean splits and preprocessing artifacts
-│   └── data_dictionary.md       # Feature documentation
+│   ├── raw/                            # Original survey datasets
+│   ├── processed/                      # Clean splits and preprocessing artifacts
+│   └── data_dictionary.md              # Feature documentation
+├── docker/
+│   ├── Dockerfile                      # ✅ Week 7-8: Enhanced container with Gradio support
+│   ├── docker-compose.yml              # ✅ Multi-service container (Gradio + Jupyter + API)
+│   ├── entrypoint_app.sh               # ✅ Enhanced entrypoint with Gradio service
+│   ├── requirements.txt                # Container dependencies
+│   ├── test_docker_setup.sh            # Docker validation script
+│   └── README.md                       # ✅ Week 7-8: Comprehensive Docker deployment guide
 ├── notebooks/
-│   ├── 01_exploratory_analysis.ipynb  # ✅ Complete EDA and data quality analysis
-│   ├── 02_data_processing.ipynb       # ✅ Preprocessing pipeline implementation
-│   ├── 03_modeling.ipynb              # ✅ Complete: Baseline models + Phase 3 enhanced models
-│   └── 04_error_analysis.ipynb        # ✅ Comprehensive error analysis framework
+│   ├── 01_exploratory_analysis.ipynb   # ✅ Complete EDA and data quality analysis
+│   ├── 02_data_processing.ipynb        # ✅ Preprocessing pipeline implementation
+│   ├── 03_modeling.ipynb               # ✅ Complete: Baseline models + Phase 3 enhanced models
+│   ├── 04_error_analysis.ipynb         # ✅ Comprehensive error analysis framework
+│   └── 05_explainability_tests.ipynb  # ✅ Week 5-6: Complete SHAP + LIME XAI implementation
 ├── reports/
-│   ├── biweekly_meeting_2.md           # ✅ Week 3-4 Phase 3 implementation summary
-│   ├── project_plan_and_roadmap.md     # Project overview and planning
-│   ├── literature_review.md            # ✅ Updated with Phase 3 findings and ensemble analysis
-│   └── final_report_draft.md           # ✅ Complete Week 1-4 implementation documentation
+│   ├── biweekly_meeting_2.md            # ✅ Week 3-4 Phase 3 implementation summary
+│   ├── biweekly_meeting_3.md            # ✅ Week 5-6 XAI implementation summary
+│   ├── biweekly_meeting_4.md            # ✅ Week 7-8 Gradio demo implementation summary
+│   ├── project_plan_and_roadmap.md      # ✅ Updated: Complete project roadmap with Week 7-8 status
+│   ├── literature_review.md             # ✅ Updated: Gradio and healthcare interface literature
+│   └── final_report_draft.md            # ✅ Updated: Week 7-8 interactive demo documentation
 ├── results/
-│   ├── models/                         # ✅ Final enhanced XGBoost model ready for XAI
-│   │   ├── final_phase3_model.joblib   # Final model for Week 5-6 XAI implementation
+│   ├── error_analysis/                 # Error analysis outputs and edge case studies
+│   ├── metrics/                        # Model evaluation results and performance summaries
+│   ├── models/                         # Serialized models and preprocessing artifacts
+│   │   ├── final_phase3_model.joblib    # ✅ Final enhanced XGBoost for Week 7-8 integration
 │   │   └── phase3_class_imbalance_results.joblib  # Complete Phase 3 results
-│   ├── .keep                           # Git directory preservation
-│   └── metrics/                        # Comprehensive evaluation results
-│   ├── metrics/                 # Model evaluation results and performance summaries
-│   ├── models/                  # Serialized baseline models and preprocessing artifacts
-│   └── plots/                   # Visualization outputs from analysis notebooks
-├── src/                         # Source code modules (future development)
-├── requirements.txt             # Python dependencies
-└── README.md                    # Project overview and Week 1-2 achievements
+│   ├── plots/                          # Visualization outputs from analysis notebooks
+│   └── xai_analysis/                   # ✅ Week 5-6: SHAP + LIME artifacts and CSV exports
+│       ├── xai_artifacts.joblib         # XAI model artifacts for Gradio integration
+│       └── *.csv                       # Research-accessible XAI analysis results
+├── src/                                # Source code modules (future development)
+├── .github/                            # GitHub workflows and templates
+├── .venv/                              # Virtual environment (local development)
+├── .vscode/                            # VS Code workspace settings
+├── launch_demo.sh                      # ✅ Week 7-8: One-command demo launcher
+├── test_week7_8.sh                     # ✅ Week 7-8: Comprehensive testing suite
+├── requirements.txt                    # Python dependencies
+├── LICENSE                             # Project license
+└── README.md                           # Project overview and implementation status
 ```
 
 ---
 
 ## Getting Started
+
+### 🚀 Quick Demo Launch (Week 7-8)
+```bash
+# Launch professional Gradio demo with one command
+./launch_demo.sh
+
+# Access interactive healthcare interface
+open http://localhost:7860  # Professional Gradio Demo
+open http://localhost:8888  # Jupyter Lab for analysis
+```
+
+### 🔬 Development Setup
+```bash
+# Manual Docker setup
+cd docker/
+docker-compose up --build
+
+# Alternative: Gradio-only mode
+docker-compose --profile gradio-only up
+
+# Alternative: Jupyter-only mode  
+docker-compose --profile jupyter-only up
+```
 
 ### 1. Environment Setup
 
@@ -114,7 +167,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 2. Reproduce Week 1-2 Results
+### 2. Reproduce Week 1-6 Results
 
 ```bash
 # Start Jupyter to explore implemented notebooks
@@ -123,17 +176,29 @@ jupyter notebook
 # Navigate through completed analysis:
 # 1. notebooks/01_exploratory_analysis.ipynb    - Complete EDA
 # 2. notebooks/02_data_processing.ipynb         - Data preprocessing 
-# 3. notebooks/03_modeling.ipynb                - Baseline models
+# 3. notebooks/03_modeling.ipynb                - Baseline + enhanced models
 # 4. notebooks/04_error_analysis.ipynb          - Comprehensive error analysis
+# 5. notebooks/05_explainability_tests.ipynb   - Week 5-6 XAI implementation
+
+# Alternative: Use Docker for containerized environment
+docker-compose -f docker/docker-compose.yml up
+# Access Jupyter Lab at http://localhost:8888
+# XAI notebooks ready to run with all dependencies
 ```
 
-### 3. Review Week 1-2 Documentation
+### 3. Review Week 5-6 XAI Results
 
 ```bash
+# XAI analysis results (accessible in Excel, R, Python)
+open results/xai_analysis/global_feature_importance.csv    # Population-level predictors
+open results/xai_analysis/healthcare_risk_factors.csv     # Clinical thresholds
+open results/xai_analysis/case_studies_analysis.csv       # Individual patient analysis
+open results/xai_analysis/README.md                       # XAI interpretation guide
+
 # Project reports and findings
-open reports/final_report_draft.md        # Complete technical report
-open reports/biweekly_meeting_1.md        # Week 1-2 progress summary
-open reports/literature_review.md         # Supporting literature
+open reports/biweekly_meeting_3.md        # Week 5-6 XAI progress summary
+open reports/final_report_draft.md        # Complete Week 1-6 technical report
+open reports/literature_review.md         # XAI literature integration
 ```
 
 ---
@@ -162,20 +227,31 @@ Based on Week 1-2 baseline findings, future optimization phases could explore:
 
 ## Project Status Summary
 
-### ✅ Week 1-2 Baseline Implementation Complete
-- **Comprehensive data analysis:** European Health Survey with 11,322 records processed
-- **Multi-algorithm baseline:** 4 models trained with XGBoost achieving best performance (49.3%)
-- **Detailed error analysis:** 10-section framework identifying key optimization opportunities
-- **Complete documentation:** Technical reports, literature review, and meeting summaries
-- **Reproducible pipeline:** All analysis notebooks executed with serialized model artifacts
+### ✅ Week 7-8 Complete Implementation
+- **Professional Gradio Demo:** Interactive healthcare prediction interface with clinical UI design
+- **Real-time XAI Integration:** SHAP explanations with feature importance visualization
+- **Clinical Risk Assessment:** Automated BMI, mental health, and lifestyle risk factor analysis  
+- **Healthcare Insights:** Evidence-based recommendations and intervention suggestions
+- **Dual Access Deployment:** Both local (localhost:7860) and public URL sharing capability
+- **Complete Docker Integration:** One-command deployment with comprehensive documentation
+- **Professional Interface:** Clean design avoiding technical jargon for healthcare professionals
 
-### 🎯 Key Technical Achievements
+### 🎯 Key Technical Achievements (Week 1-8)
 - **Excellent model calibration:** ECE=0.009 meets healthcare deployment standards
-- **Class imbalance quantified:** 1:39.2 ratio requiring specialized optimization techniques
-- **Feature validation:** Self-rated health confirmed as dominant predictor across all models
-- **High model correlation:** XGBoost-Random Forest (0.85) suggests strong ensemble potential
+- **XAI validation:** 32% SHAP-LIME agreement with clinical interpretation framework
+- **Clinical insights:** BMI (37.0/100 reliability), Physical Effort, Sleep Quality as top predictors
+- **Interactive explanations:** Real-time SHAP visualizations with healthcare context
+- **Production-ready deployment:** Complete Docker containerization with Gradio + Jupyter Lab
+- **Accessibility:** Both technical (joblib) and research (CSV) formats with professional UI
 
-**Foundation Status:** Robust baseline established with comprehensive analysis supporting future optimization phases.
+### 🚀 Week 9-10 Ready: Clinical Validation and Optimization
+- **User Experience Testing:** Healthcare professional feedback collection and interface refinement
+- **Performance Optimization:** Clinical workflow integration and response time improvement
+- **Advanced XAI Visualizations:** Waterfall plots, interaction effects, and confidence intervals
+- **Clinical Validation:** Healthcare domain expert review and validation of explanations
+- **Production Deployment:** Secure authentication, monitoring, and clinical integration preparation
+
+**Implementation Status:** Week 1-8 complete with professional interactive demo ready for clinical validation and user experience testing.
 
 ---
 

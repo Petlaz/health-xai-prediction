@@ -1,1 +1,102 @@
 # docker-compose.yml
+# Health XAI Prediction Project - Week 7-8 Gradio Demo Implementation
+
+version: '3.8'
+
+services:
+  # Main XAI application with Jupyter + Gradio
+  health-xai:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: health_xai_prediction
+    ports:
+      - "8888:8888"  # Jupyter Lab
+      - "7860:7860"  # Gradio Demo
+    volumes:
+      - ../data:/app/data
+      - ../results:/app/results
+      - ../notebooks:/app/notebooks
+      - ../reports:/app/reports
+      - ../app:/app/app
+    environment:
+      - PYTHONPATH=/app
+      - JUPYTER_ENABLE_LAB=yes
+      - GRADIO_SHARE=true
+    restart: unless-stopped
+    command: ["/entrypoint.sh"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Jupyter-only service (alternative)
+  jupyter-lab:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: health_xai_jupyter
+    ports:
+      - "8889:8888"  # Alternative Jupyter port
+    volumes:
+      - ../data:/app/data
+      - ../results:/app/results
+      - ../notebooks:/app/notebooks
+      - ../reports:/app/reports
+    environment:
+      - PYTHONPATH=/app
+      - JUPYTER_ENABLE_LAB=yes
+    restart: unless-stopped
+    command: ["/entrypoint.sh", "jupyter"]
+    profiles: ["jupyter-only"]
+
+  # Gradio-only service (alternative)
+  gradio-demo:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: health_xai_gradio
+    ports:
+      - "7861:7860"  # Alternative Gradio port
+    volumes:
+      - ../results:/app/results
+      - ../app:/app/app
+    environment:
+      - PYTHONPATH=/app
+      - GRADIO_SHARE=true
+      - GRADIO_SERVER_NAME=0.0.0.0
+    restart: unless-stopped
+    command: ["/entrypoint.sh", "gradio"]
+    profiles: ["gradio-only"]
+    depends_on:
+      - health-xai
+
+  # Optional: Standalone XAI API service
+  xai-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: health_xai_api
+    ports:
+      - "5000:5000"
+    volumes:
+      - ../results:/app/results
+      - ../app:/app/app
+    environment:
+      - PYTHONPATH=/app
+      - FLASK_ENV=development
+    profiles: ["api"]
+    restart: unless-stopped
+    command: ["python", "-c", "print('🚀 XAI API ready for Week 9-10 integration'); import time; time.sleep(3600)"]
+
+networks:
+  default:
+    name: health_xai_network
+    driver: bridge
+
+volumes:
+  xai_data:
+    driver: local
+  model_cache:
+    driver: local
